@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 namespace SeaBattle {
 
@@ -95,12 +96,24 @@ namespace SeaBattle {
             }
         }
 
+		//int check_coordinates_X(PictureBox^ obj) {
+		//	int coordinates = 0;
+		//	std::string what = obj->Tag->ToString();
+		//	return coordinates;
+		//}
+
         // handler click by the cell
         void OnCellClick(System::Object^ sender, System::EventArgs^ e)
         {
             PictureBox^ clickedCell = safe_cast<PictureBox^>(sender);
-            System::Drawing::Point^ coord = safe_cast<System::Drawing::Point^>(clickedCell->Tag);
-            clickedCell->BackColor = System::Drawing::Color::DimGray; // change color of cell
+			
+			if (clickedCell->BackColor != System::Drawing::Color::DimGray) {
+				System::Drawing::Point^ coord = safe_cast<System::Drawing::Point^>(clickedCell->Tag);
+				clickedCell->Size = System::Drawing::Size(28, 28);
+				clickedCell->Location = System::Drawing::Point(System::Convert::ToInt32(clickedCell->Location.X) + 1, System::Convert::ToInt32(clickedCell->Location.Y) + 1);
+
+				clickedCell->BackColor = System::Drawing::Color::DimGray; // change color of cell
+			}
             // you need to create additional logic, a handler that checks whether the ship is hit or not.
         }
 
