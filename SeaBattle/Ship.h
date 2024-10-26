@@ -19,6 +19,7 @@ protected:
 	char* name = nullptr;
 	//or char* const? nah... i am joke
 	size_t name_size;
+	List<List<int>^>^ coordinates;
 	List<List<int>^>^ where_hits;
 
 	static int number = 0;
@@ -26,7 +27,7 @@ protected:
 		number++;
 	}
 	// first is x, second is y
-	Ship(List<int> coords_X_Y, int length, char* name);
+	Ship(List<List<int>^>^ coords_X_Y, int length, char* name);
 	//////Ship();
 	virtual ~Ship();
 	bool check_suitability() {
@@ -36,6 +37,8 @@ protected:
 		return true;
 	}
 public:
+	virtual bool is_that_coord(int X, int Y) = 0; // and there check array of coordinates the ship for return "true" if coordinates is equal or false if coords isn't equal
+
 	//////void operator()(int coordX, int coordY, int length, char* name);
 	//virtual void operator=(Ship Robj) = 0;
 	// i want to do parent class where was that variables and info about him hits. 
