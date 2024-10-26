@@ -3,45 +3,43 @@
 #include <vector>
 using namespace std;
 
+
+using namespace System::Collections::Generic;
 ref class Ship {
 
 private:
 
 protected:
-	int coordX;
-	int coordY;
+	//i will make that for understanding where are ship.
+	//left and bottom point for coordinates.
+	//and perhaps will need to do right abd top point for more precision. -made
+
+
 	int length;
 	char* name = nullptr;
-	unsigned int name_size : 8;
-	int** where_hits;
 	//or char* const? nah... i am joke
-	Ship(int coordX, int coordY, int length, char* name, int coord_hitX, int coord_hitY) : coordX{ coordX }, coordY{ coordY }, length{ length }, name{ name } {
-		name_size = strlen(name);
-		// i suppose what strlen begin counting including zero. Such as "123" 1-0 2-1 3-2 (value - index);
+	size_t name_size;
+	List<List<int>^>^ where_hits;
 
+	static int number = 0;
+	void addition_number() {
+		number++;
 	}
-	Ship() : Ship(0, 0, 0, nullptr, 0, 0) {}
-	~Ship() {
-		delete[] name;
-		delete[] where_hits;
+	// first is x, second is y
+	Ship(List<int> coords_X_Y, int length, char* name);
+	//////Ship();
+	virtual ~Ship();
+	bool check_suitability() {
+		if (where_hits->Count != 0) {
+			return true;
+		}
+		return true;
 	}
-
 public:
-	void operator()(int coordX, int coordY, int length, char* name) {
-		this->coordX = coordX;
-		this->coordY = coordY;
-		this->length = length;
-		this->name = name;
-		this->name_size = strlen(name);
-	}
-	void operator=(Ship Robj) {
-		this->coordX = Robj.coordX;
-		this->coordY = Robj.coordY;
-		this->length = Robj.length;
-		this->name = Robj.name;
-		this->name_size = strlen(this->name);
-	}
+	//////void operator()(int coordX, int coordY, int length, char* name);
+	//virtual void operator=(Ship Robj) = 0;
 	// i want to do parent class where was that variables and info about him hits. 
 	// if he still alive i should can find out about it
+	virtual bool was_hitted() = 0;
 };
 

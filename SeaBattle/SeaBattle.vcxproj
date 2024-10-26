@@ -122,11 +122,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="battleship.cpp" />
     <ClCompile Include="Battlfield.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Ship.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="battleship.h" />
     <ClInclude Include="Battlfield.h">
       <FileType>CppForm</FileType>
     </ClInclude>
