@@ -2,7 +2,6 @@
 #include <sstream>
 #include <Windows.h>
 #include <string>
-
 using namespace System;
 using namespace System::Windows::Forms;
 
@@ -13,7 +12,7 @@ int main(array<String^>^ args) {
 	Application::SetCompatibleTextRenderingDefault(false);
 	Application::EnableVisualStyles();
 	SeaBattle::Battlfield form;
-	Application::Run(% form);
+	Application::Run(%form);
 
 	return 0;
 }

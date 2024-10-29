@@ -1,16 +1,21 @@
 #pragma once
 #include "Ship.h"
 
-using namespace std;
-
 ref class Battleship : public Ship{
 private:
-
 public:
 	Battleship(List<List<int>^>^ coords_X_Y, int length, char* name) : Ship(coords_X_Y, length, name){}
-	bool was_hitted() override {
+    bool was_hitted(int X, int Y) override {
+        List<List<int>^>^ buffer = get_coord();
+        for (int i = 0; i < buffer->Count; i++) {
+            if (buffer[i]->default[0] == X && buffer[i]->default[1] == Y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+	bool is_that_coord(int X, int Y) override {
 		return true;
 	}
-
 };
-

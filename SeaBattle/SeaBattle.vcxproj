@@ -124,6 +124,7 @@
   <ItemGroup>
     <ClCompile Include="battleship.cpp" />
     <ClCompile Include="Battlfield.cpp" />
+    <ClCompile Include="Field.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Ship.cpp" />
   </ItemGroup>
@@ -132,6 +133,7 @@
     <ClInclude Include="Battlfield.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="Field.h" />
     <ClInclude Include="Ship.h" />
   </ItemGroup>
   <ItemGroup>
