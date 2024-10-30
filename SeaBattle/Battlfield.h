@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include <array>
+#include <ctime>
 #include "Ship.h"
 #include "battleship.h"
 
@@ -28,14 +28,19 @@ namespace SeaBattle {
 	public:
 		Battlfield(void)
 		{
-			ships_array = gcnew List<Ship^>;
+			ships_array = gcnew List<Ship^>();
+			sizeOfShips = gcnew Dictionary<String^, int>();
+			countOfShips = gcnew Dictionary<String^, int>();
+			init_SizeOfShips();
+			init_countOfShips();
+
 			InitializeComponent();
 			
 			//
 			//TODO: Add the constructor code here
 			//
 			CreateGrid(10, 10, panelGrid);
-
+			InitializeShips();
 		}
 
 	public:
@@ -45,10 +50,38 @@ namespace SeaBattle {
 	public:
 	private:
 		GameStage currentStage = GameStage::Setup;
+		/*
+		   1 ship - a row of 4 cells(ìbattleshipî or ìfour - deckî)
+		   2 ships - a row of 3 squares(ìcruisersî or ìthree - deckersî)
+		   3 ships - a row of 2 cells(ìdestroyersî or ìtwo - deckî)
+		   4 ships - 1 cell(ìsubmarinesî or ìsingle deckî)*/
+		Dictionary < String^, int>^ sizeOfShips;
+		Dictionary < String^, int>^ countOfShips;
+		Dictionary < String^, bool>^ checker;
+
+		List<Ship^>^ ships_array;
+		void init_SizeOfShips() {
+			sizeOfShips->Add("battleship", 4);
+			sizeOfShips->Add("cruisers", 3);
+			sizeOfShips->Add("destroyers", 2);
+			sizeOfShips->Add("submarines", 1);
+		}
+		void init_countOfShips() {
+			countOfShips->Add("battleship", 1);
+			countOfShips->Add("cruisers", 2);
+			countOfShips->Add("destroyers", 3);
+			countOfShips->Add("submarines", 4);
+		}
+		void init_checker() {
+			checker->Add("battleship", false);
+
+		}
 	private: System::Windows::Forms::Panel^ panel1;
+		   
 
-		   List<Ship^>^ ships_array;
-
+	private: System::Void MainForm_Load(System::Object^ sender, System::EventArgs^ e) {
+		InitializeGameStage();
+	}
 	protected:
 		/// <summary>
 		/// Clean up any resources being used.
@@ -70,6 +103,7 @@ namespace SeaBattle {
 
         System::Windows::Forms::Panel^ panelGrid;
 		System::Windows::Forms::Panel^ panelGrid2;
+		System::Windows::Forms::Panel^ ShipsField;
 
 		//System::Windows::Forms::Panel^ panelGrid2;
 
@@ -87,6 +121,8 @@ namespace SeaBattle {
         {
 			this->panelGrid = (gcnew System::Windows::Forms::Panel());
 			this->panelGrid2 = (gcnew System::Windows::Forms::Panel());
+			this->ShipsField = (gcnew System::Windows::Forms::Panel());
+
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->SuspendLayout();
 			// 
@@ -128,7 +164,7 @@ namespace SeaBattle {
 		}
 		void InitializeGameStage()
 		{
-			if (currentStage == GameStage::Setup) {
+			if (currentStage == GameStage::Battle) {
 				// —ÓÁ‰‡ÌËÂ Ë Ì‡ÒÚÓÈÍ‡ panelGrid2
 				this->panelGrid2 = gcnew System::Windows::Forms::Panel();
 				this->panelGrid2->Location = System::Drawing::Point(470, 21);
@@ -145,19 +181,18 @@ namespace SeaBattle {
 		}
 		void InitializeShips() {
 			if (currentStage == GameStage::Setup) {
-				Ship^ ship = nullptr;
-				ships_array->Add(ship);
-				this->panelGrid2 = gcnew System::Windows::Forms::Panel();
-				this->panelGrid2->Location = System::Drawing::Point(470, 21);
-				this->panelGrid2->Name = L"Ship";
-				this->panelGrid2->Size = System::Drawing::Size(300, 300);
-				this->panelGrid2->TabIndex = 1;
+
+				this->ShipsField = gcnew System::Windows::Forms::Panel();
+				this->ShipsField->Location = System::Drawing::Point(470, 21);
+				this->ShipsField->Name = L"Ship";
+				this->ShipsField->Size = System::Drawing::Size(300, 300);
+				this->ShipsField->TabIndex = 1;
 
 				// ƒÓ·‡‚ÎÂÌËÂ panelGrid2 Í ÙÓÏÂ
-				//this->Controls->Add(this->panelGrid2);
+				this->Controls->Add(this->ShipsField);
 
 				// —ÓÁ‰‡ÌËÂ ÒÂÚÍË Ì‡ ˝ÚÓÈ Ô‡ÌÂÎË
-				CreateGrid(10, 10, panelGrid2);
+				CreateGrid(10, 10, ShipsField);
 			}
 		}
         // function which create some grid
@@ -180,8 +215,47 @@ namespace SeaBattle {
                 }
             }
         }
-		void CreateShip(int rows, int cols, Panel^ panel) {
+		void CreateShipsGrid(int rows, int cols, Panel^ panel)
+		{
+			for (int i = 0; i < rows; ++i)
+			{
+				for (int j = 0; j < cols; ++j)
+				{
+					PictureBox^ cell = gcnew PictureBox();
+					cell->Size = System::Drawing::Size(30, 30);
+					cell->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+					cell->Location = System::Drawing::Point(j * 30, i * 30);
+					cell->BackColor = System::Drawing::Color::LightBlue;
+					cell->Tag = gcnew System::Drawing::Point(i, j);
+					cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
 
+
+					panel->Controls->Add(cell); // add the cell on the panel
+				}
+			}
+		}
+
+		//+-------------------------------------------------------------+
+		//|general tast it's figure it out								|
+		//|what wrong with void CreateShip(int length, Panel^ panel) {	|
+		//+-------------------------------------------------------------+
+
+
+		void CreateShip(int length, Panel^ panel) {
+			srand(time(nullptr));
+			List<List<int>^>^ buf = gcnew List<List<int>^>();
+			//Ship^ ship = gcnew Battleship(buf, 4, "battleship");
+			if (checker["battleship"] == false) {
+				//ship = gcnew Battleship()
+			}
+			//ships_array->Add(ship);
+			for each (KeyValuePair<String^, int> kvp in countOfShips) {
+				String^ key = kvp.Key;
+				int value = kvp.Value;
+
+				// Do something with key and value
+
+			}
 		}
 
 		void NextStage() {
@@ -223,7 +297,6 @@ namespace SeaBattle {
 		void Battlfield::OnCellMouseClick(Object^ sender, MouseEventArgs^ e){
 
 			if (currentStage == GameStage::Setup) {
-				InitializeGameStage();
 
 			}
 			else if (currentStage == GameStage::Placement) {
@@ -285,4 +358,6 @@ namespace SeaBattle {
 		}
 #pragma endregion
 };
+
+
 }
