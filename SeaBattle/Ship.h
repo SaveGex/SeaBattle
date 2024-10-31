@@ -33,6 +33,9 @@ public:
 		name_size = name->Length;
 		addition_number();
 	}
+	int get_number_of_ships() {
+		return number;
+	}
 	virtual bool is_that_coord(int X, int Y) abstract; // and there check array of coordinates the ship for return "true" if coordinates is equal or false if coords isn't equal
 	Field field;
 	//////void operator()(int coordX, int coordY, int length, char* name);

@@ -15,7 +15,12 @@ public:
         }
         return false;
     }
-
+    static void addition_number() {
+        number++;
+    }
+    int get_number_of_ships() {
+        return number;
+    }
 	bool is_that_coord(int X, int Y) override {
 		return true;
 	}

@@ -40,7 +40,6 @@ namespace SeaBattle {
 			//TODO: Add the constructor code here
 			//
 			CreateGrid(10, 10, panelGrid);
-			InitializeShips();
 		}
 
 	public:
@@ -192,7 +191,7 @@ namespace SeaBattle {
 				this->Controls->Add(this->ShipsField);
 
 				// Создание сетки на этой панели
-				CreateGrid(10, 10, ShipsField);
+				CreateShipsGrid(10, 10, ShipsField);
 			}
 		}
         // function which create some grid
@@ -225,7 +224,7 @@ namespace SeaBattle {
 					cell->Size = System::Drawing::Size(30, 30);
 					cell->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
 					cell->Location = System::Drawing::Point(j * 30, i * 30);
-					cell->BackColor = System::Drawing::Color::LightBlue;
+					cell->BackColor = System::Drawing::Color::AliceBlue;
 					cell->Tag = gcnew System::Drawing::Point(i, j);
 					cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
 
@@ -235,24 +234,73 @@ namespace SeaBattle {
 			}
 		}
 
+
+		List<List<int>^>^ randomize_coordinates(int length) {
+			srand(static_cast<unsigned int>(time(0)));
+			List<List<int>^>^ rand_coords = nullptr;
+			bool XY = (rand() % (2) == 1) ? true : false;/*"true" define ONLY value X, false means ONLY the Y define what will be changed. Means on the axis X or Y*/
+			bool Y_Direction = (rand() % (2) == 1) ? true : false;/*"true" define direction will be changed only by the "top", false opposite that is to the "down"*/
+			bool X_Direction = (rand() % (2) == 1) ? true : false;/*"true" define direction will be changed only by the "rigth", false opposite that is to the "left"*/
+			bool okPosition = false; /*while rand_coords don't to follow the ruls! kurwa*/
+			int X = rand() % (10);/*randomly determines coordinates on the begin the function*/
+			int Y = rand() % (10);/*randomly determines coordinates on the begin the function*/
+
+			while (okPosition == false) {
+				
+				List<List<int>^>^ buffer = gcnew List<List<int>^>;
+				for (int i = 0; i < length; i++) {
+					buffer[i] = gcnew List<int>();
+					if (XY) {
+						X += (X_Direction == true) ? 1 : -1;
+					}
+					else {
+						Y += (Y_Direction == true) ? 1 : -1;
+					}
+					buffer[i]->default[0] = X;
+					buffer[i]->default[1] = Y;
+				}
+					
+				/*try {
+					throw gcnew System::Exception("Some error occurred!");
+				}
+				catch (System::Exception^ e) {
+					MessageBox::Show(e->Message, "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+				}*/
+			}
+			return rand_coords;
+
+		}
 		//+-------------------------------------------------------------+
 		//|general tast it's figure it out								|
 		//|what wrong with void CreateShip(int length, Panel^ panel) {	|
 		//+-------------------------------------------------------------+
 
-
 		void CreateShip(int length, Panel^ panel) {
-			srand(time(nullptr));
-			List<List<int>^>^ buf = gcnew List<List<int>^>();
-			//Ship^ ship = gcnew Battleship(buf, 4, "battleship");
-			if (checker["battleship"] == false) {
-				//ship = gcnew Battleship()
-			}
-			//ships_array->Add(ship);
+			//if (checker["battleship"] == false) {
+			//	//ship = gcnew Battleship()
+			//}
 			for each (KeyValuePair<String^, int> kvp in countOfShips) {
 				String^ key = kvp.Key;
 				int value = kvp.Value;
+				for (int i = 0; i < value; i++) {
+					List<List<int>^>^ buf = randomize_coordinates(sizeOfShips[key]);
 
+					if (key == "battleship") {
+
+						Ship^ ship = gcnew Battleship(buf, 4, "battleship");
+						ships_array->Add(ship);
+
+					}
+					else if (key == "cruisers") {
+
+					}
+					else if (key == "destroyers") {
+
+					}
+					else if (key == "submarines") {
+
+					}
+				}
 				// Do something with key and value
 
 			}
@@ -277,6 +325,7 @@ namespace SeaBattle {
 			}
 		}
 		void StartPlacement() {
+			InitializeShips();
 
 			// Код для размещения кораблей игроком
 		}
