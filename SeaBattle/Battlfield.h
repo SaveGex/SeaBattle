@@ -28,12 +28,10 @@ namespace SeaBattle {
 	public:
 		Battlfield(void)
 		{
-			ships_array = gcnew List<Ship^>();
-			sizeOfShips = gcnew Dictionary<String^, int>();
-			countOfShips = gcnew Dictionary<String^, int>();
 			init_SizeOfShips();
 			init_countOfShips();
-
+			init_colors();
+			init_checker();
 			InitializeComponent();
 			
 			//
@@ -49,30 +47,53 @@ namespace SeaBattle {
 	public:
 	private:
 		GameStage currentStage = GameStage::Setup;
+
+		List < Ship ^ > ^ ships_array = gcnew List < Ship ^ > ();
+
 		/*
 		   1 ship - a row of 4 cells(ìbattleshipî or ìfour - deckî)
 		   2 ships - a row of 3 squares(ìcruisersî or ìthree - deckersî)
 		   3 ships - a row of 2 cells(ìdestroyersî or ìtwo - deckî)
 		   4 ships - 1 cell(ìsubmarinesî or ìsingle deckî)*/
-		Dictionary < String^, int>^ sizeOfShips;
-		Dictionary < String^, int>^ countOfShips;
-		Dictionary < String^, bool>^ checker;
+		Dictionary < String^, int> ^ sizeOfShips = gcnew Dictionary<String^, int> ();
 
-		List<Ship^>^ ships_array;
+		Dictionary < String^, int> ^ countOfShips = gcnew Dictionary<String^, int> ();
+
+		Dictionary < String^, System::Drawing::Color>^ colors = gcnew Dictionary<String^, System::Drawing::Color>();
+
+		Dictionary < String^, bool> ^ checker = gcnew Dictionary<String^, bool> ();
+
+		/*BS = BattleShip*/
+		String^ BS = "battleship";
+		/*CR = CRuisers*/
+		String^ CR = "cruisers";
+		/*DS = DeStroyer*/
+		String^ DS = "destroyers";
+		/*SB = submarines*/
+		String^ SB = "submarines";
+
+
+		
 		void init_SizeOfShips() {
-			sizeOfShips->Add("battleship", 4);
-			sizeOfShips->Add("cruisers", 3);
-			sizeOfShips->Add("destroyers", 2);
-			sizeOfShips->Add("submarines", 1);
+			sizeOfShips->Add(BS, 4);
+			sizeOfShips->Add(CR, 3);
+			sizeOfShips->Add(DS, 2);
+			sizeOfShips->Add(SB, 1);
 		}
 		void init_countOfShips() {
-			countOfShips->Add("battleship", 1);
-			countOfShips->Add("cruisers", 2);
-			countOfShips->Add("destroyers", 3);
-			countOfShips->Add("submarines", 4);
+			countOfShips->Add(BS, 1);
+			countOfShips->Add(CR, 2);
+			countOfShips->Add(DS, 3);
+			countOfShips->Add(SB, 4);
+		}
+		void init_colors() {
+			colors->Add(BS, System::Drawing::Color::DarkGray);
+			colors->Add(CR, System::Drawing::Color::Crimson);
+			colors->Add(DS, System::Drawing::Color::Bisque);
+			colors->Add(SB, System::Drawing::Color::DarkViolet);
 		}
 		void init_checker() {
-			checker->Add("battleship", false);
+			checker->Add(BS, false);
 
 		}
 	private: System::Windows::Forms::Panel^ panel1;
@@ -121,7 +142,6 @@ namespace SeaBattle {
 			this->panelGrid = (gcnew System::Windows::Forms::Panel());
 			this->panelGrid2 = (gcnew System::Windows::Forms::Panel());
 			this->ShipsField = (gcnew System::Windows::Forms::Panel());
-
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->SuspendLayout();
 			// 
@@ -139,6 +159,13 @@ namespace SeaBattle {
 			this->panelGrid2->Size = System::Drawing::Size(200, 100);
 			this->panelGrid2->TabIndex = 0;
 			// 
+			// ShipsField
+			// 
+			this->ShipsField->Location = System::Drawing::Point(0, 0);
+			this->ShipsField->Name = L"ShipsField";
+			this->ShipsField->Size = System::Drawing::Size(200, 100);
+			this->ShipsField->TabIndex = 0;
+			// 
 			// button1
 			// 
 			this->button1->Location = System::Drawing::Point(358, 363);
@@ -147,6 +174,7 @@ namespace SeaBattle {
 			this->button1->TabIndex = 1;
 			this->button1->Text = L"Ready";
 			this->button1->UseVisualStyleBackColor = true;
+			this->button1->Click += gcnew System::EventHandler(this, &Battlfield::button1_Click);
 			// 
 			// Battlfield
 			// 
@@ -161,6 +189,9 @@ namespace SeaBattle {
 			this->ResumeLayout(false);
 
 		}
+
+#pragma region some initialization
+
 		void InitializeGameStage()
 		{
 			if (currentStage == GameStage::Battle) {
@@ -179,20 +210,18 @@ namespace SeaBattle {
 			}
 		}
 		void InitializeShips() {
-			if (currentStage == GameStage::Setup) {
 
-				this->ShipsField = gcnew System::Windows::Forms::Panel();
-				this->ShipsField->Location = System::Drawing::Point(470, 21);
-				this->ShipsField->Name = L"Ship";
-				this->ShipsField->Size = System::Drawing::Size(300, 300);
-				this->ShipsField->TabIndex = 1;
+			this->ShipsField = gcnew System::Windows::Forms::Panel();
+			this->ShipsField->Location = System::Drawing::Point(470, 21);
+			this->ShipsField->Name = L"Ship";
+			this->ShipsField->Size = System::Drawing::Size(300, 300);
+			this->ShipsField->TabIndex = 1;
 
-				// ƒÓ·‡‚ÎÂÌËÂ panelGrid2 Í ÙÓÏÂ
-				this->Controls->Add(this->ShipsField);
+			// ƒÓ·‡‚ÎÂÌËÂ panelGrid2 Í ÙÓÏÂ
+			this->Controls->Add(this->ShipsField);
 
-				// —ÓÁ‰‡ÌËÂ ÒÂÚÍË Ì‡ ˝ÚÓÈ Ô‡ÌÂÎË
-				CreateShipsGrid(10, 10, ShipsField);
-			}
+			// —ÓÁ‰‡ÌËÂ ÒÂÚÍË Ì‡ ˝ÚÓÈ Ô‡ÌÂÎË
+			CreateGrid(10, 10, ShipsField);
 		}
         // function which create some grid
         void CreateGrid(int rows, int cols, Panel^ panel)
@@ -233,11 +262,44 @@ namespace SeaBattle {
 				}
 			}
 		}
+#pragma endregion
 
+#pragma region create random ships
+
+
+
+		bool that_coorsd_is_clear_for_ship(List<List<int>^>^ new_coords) {
+
+			//first of all i'll check whether goes beyond the ship. By using the coordinates
+			for (int i = 0; i < new_coords->Count; i++) {
+				//X still always first.
+				if (new_coords[i]->default[0] >= 10 || new_coords[i]->default[1] >= 10 || new_coords[i]->default[0] < 0 || new_coords[i]->default[1] < 0) {
+					return false;
+				}
+			}
+			// and the second it's general if
+			if (ships_array->Count > 0) {
+				for(int i=0; i<ships_array->Count; i++) { //need to run throgh by the ships array for getting the coords and... make condition
+					List<List<int>^>^ where_are_ship = ships_array[i]->where_are_you();
+					for (int j = 0; j < where_are_ship->Count; j++) {// run through by resulting coordinates
+						for (int k = 0; k < new_coords->Count; k++) { // that cycle are exists for don't leave of the limits of list
+							if (new_coords[k]->Contains(where_are_ship[i]->default[0]) || new_coords[k]->Contains(where_are_ship[i]->default[1])) {
+								return false;
+							}
+						}
+					}
+				}
+
+			}
+
+			return true;
+		}
 
 		List<List<int>^>^ randomize_coordinates(int length) {
 			srand(static_cast<unsigned int>(time(0)));
 			List<List<int>^>^ rand_coords = nullptr;
+			List<List<int>^>^ used_coords = gcnew List<List<int>^>;
+
 			bool XY = (rand() % (2) == 1) ? true : false;/*"true" define ONLY value X, false means ONLY the Y define what will be changed. Means on the axis X or Y*/
 			bool Y_Direction = (rand() % (2) == 1) ? true : false;/*"true" define direction will be changed only by the "top", false opposite that is to the "down"*/
 			bool X_Direction = (rand() % (2) == 1) ? true : false;/*"true" define direction will be changed only by the "rigth", false opposite that is to the "left"*/
@@ -259,7 +321,9 @@ namespace SeaBattle {
 					buffer[i]->default[0] = X;
 					buffer[i]->default[1] = Y;
 				}
-					
+				if (that_coorsd_is_clear_for_ship(buffer)) {
+					okPosition = true;
+				}
 				/*try {
 					throw gcnew System::Exception("Some error occurred!");
 				}
@@ -274,30 +338,38 @@ namespace SeaBattle {
 		//|general tast it's figure it out								|
 		//|what wrong with void CreateShip(int length, Panel^ panel) {	|
 		//+-------------------------------------------------------------+
+		void Mark_the_ship(Ship^ some_ship) {
+			List<List<int>^>^ coords = some_ship->where_are_you();
 
+			for (int i = 0; i < coords->Count; i++) {
+
+			}
+		}
 		void CreateShip(int length, Panel^ panel) {
 			//if (checker["battleship"] == false) {
 			//	//ship = gcnew Battleship()
 			//}
 			for each (KeyValuePair<String^, int> kvp in countOfShips) {
+				
 				String^ key = kvp.Key;
 				int value = kvp.Value;
+
 				for (int i = 0; i < value; i++) {
 					List<List<int>^>^ buf = randomize_coordinates(sizeOfShips[key]);
 
-					if (key == "battleship") {
+					if (key == BS) {
 
-						Ship^ ship = gcnew Battleship(buf, 4, "battleship");
+						Ship^ ship = gcnew Battleship(buf, 4, BS);
 						ships_array->Add(ship);
+						Mark_the_ship(ship);
+					}
+					else if (key == CR) {
 
 					}
-					else if (key == "cruisers") {
+					else if (key == DS) {
 
 					}
-					else if (key == "destroyers") {
-
-					}
-					else if (key == "submarines") {
+					else if (key == SB) {
 
 					}
 				}
@@ -305,6 +377,9 @@ namespace SeaBattle {
 
 			}
 		}
+
+#pragma endregion
+
 
 		void NextStage() {
 			switch (currentStage) {
@@ -406,6 +481,9 @@ namespace SeaBattle {
 
 		}
 #pragma endregion
+private: System::Void button1_Click(System::Object^ sender, System::EventArgs^ e) {
+	Battlfield::NextStage();
+}
 };
 
 

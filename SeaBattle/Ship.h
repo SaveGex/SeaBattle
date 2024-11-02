@@ -43,5 +43,7 @@ public:
 	// i want to do parent class where was that variables and info about him hits. 
 	// if he still alive i should can find out about it
 	virtual bool was_hitted(int X, int Y) abstract;
+	virtual List<List<int>^>^ where_are_you() abstract;
+
 };
 
