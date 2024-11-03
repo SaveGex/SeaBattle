@@ -37,7 +37,7 @@ namespace SeaBattle {
 			//
 			//TODO: Add the constructor code here
 			//
-			CreateGrid(10, 10, panelGrid);
+			CreateGrid(rows, cols, panelGrid);
 		}
 
 	public:
@@ -72,7 +72,9 @@ namespace SeaBattle {
 		/*SB = submarines*/
 		String^ SB = "submarines";
 
-
+		//size of field
+		const int rows = 10;
+		const int cols = 10;
 		
 		void init_SizeOfShips() {
 			sizeOfShips->Add(BS, 4);
@@ -257,7 +259,6 @@ namespace SeaBattle {
 					cell->Tag = gcnew System::Drawing::Point(i, j);
 					cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
 
-
 					panel->Controls->Add(cell); // add the cell on the panel
 				}
 			}
@@ -268,7 +269,7 @@ namespace SeaBattle {
 
 
 
-		bool that_coorsd_is_clear_for_ship(List<List<int>^>^ new_coords) {
+		bool clear_coordinates(List<List<int>^>^ new_coords) {
 
 			//first of all i'll check whether goes beyond the ship. By using the coordinates
 			for (int i = 0; i < new_coords->Count; i++) {
@@ -279,10 +280,14 @@ namespace SeaBattle {
 			}
 			// and the second it's general if
 			if (ships_array->Count > 0) {
+
 				for(int i=0; i<ships_array->Count; i++) { //need to run throgh by the ships array for getting the coords and... make condition
 					List<List<int>^>^ where_are_ship = ships_array[i]->where_are_you();
+
 					for (int j = 0; j < where_are_ship->Count; j++) {// run through by resulting coordinates
+
 						for (int k = 0; k < new_coords->Count; k++) { // that cycle are exists for don't leave of the limits of list
+
 							if (new_coords[k]->Contains(where_are_ship[i]->default[0]) || new_coords[k]->Contains(where_are_ship[i]->default[1])) {
 								return false;
 							}
@@ -298,7 +303,6 @@ namespace SeaBattle {
 		List<List<int>^>^ randomize_coordinates(int length) {
 			srand(static_cast<unsigned int>(time(0)));
 			List<List<int>^>^ rand_coords = nullptr;
-			List<List<int>^>^ used_coords = gcnew List<List<int>^>;
 
 			bool XY = (rand() % (2) == 1) ? true : false;/*"true" define ONLY value X, false means ONLY the Y define what will be changed. Means on the axis X or Y*/
 			bool Y_Direction = (rand() % (2) == 1) ? true : false;/*"true" define direction will be changed only by the "top", false opposite that is to the "down"*/
@@ -309,20 +313,30 @@ namespace SeaBattle {
 
 			while (okPosition == false) {
 				
-				List<List<int>^>^ buffer = gcnew List<List<int>^>;
+				List<List<int>^>^ buffer = gcnew List<List<int>^>();
 				for (int i = 0; i < length; i++) {
-					buffer[i] = gcnew List<int>();
+					List<int>^ innerList = gcnew List<int>(); 
+					buffer->Add(innerList);
 					if (XY) {
 						X += (X_Direction == true) ? 1 : -1;
 					}
 					else {
 						Y += (Y_Direction == true) ? 1 : -1;
 					}
-					buffer[i]->default[0] = X;
-					buffer[i]->default[1] = Y;
+					//for clarity
+					/*buffer[i]->default[0] = X;
+					buffer[i]->default[1] = Y;*/
+					buffer[i]->Add(X);
+					buffer[i]->Add(Y);
+
 				}
-				if (that_coorsd_is_clear_for_ship(buffer)) {
+				if (clear_coordinates(buffer)) {
 					okPosition = true;
+					rand_coords = buffer;
+				}
+				else {
+					Y = rand() % (10);
+					X = rand() % (10);
 				}
 				/*try {
 					throw gcnew System::Exception("Some error occurred!");
@@ -338,17 +352,49 @@ namespace SeaBattle {
 		//|general tast it's figure it out								|
 		//|what wrong with void CreateShip(int length, Panel^ panel) {	|
 		//+-------------------------------------------------------------+
+		void SetTag(PictureBox^ cell, int x, int y) { 
+			Tuple<int, int>^ coordinates = Tuple::Create(x, y); cell->Tag = coordinates; 
+		}
+
 		void Mark_the_ship(Ship^ some_ship) {
+			//general moment where i use attribute from header of function for getting the coords.
 			List<List<int>^>^ coords = some_ship->where_are_you();
+			List<PictureBox^>^ list_with_links_to_Cells = gcnew List<PictureBox^>();
 
 			for (int i = 0; i < coords->Count; i++) {
+				int x = coords[i]->default[0];
+				int y = coords[i]->default[1];
 
+
+				//cycle for find need cell by tag of declared the element. I have this element "ShipsField"
+				for each (Control ^ control in ShipsField->Controls) {
+					PictureBox^ cell = dynamic_cast<PictureBox^>(control); 
+
+					if (cell != nullptr && (cell->Location.X / 30) == x && (cell->Location.Y / 30) == y) {
+						list_with_links_to_Cells->Add(cell);
+					}
+
+				}
+			}
+
+
+			//to what color i want to draw the cell
+			for each (PictureBox ^ cell in list_with_links_to_Cells) {
+				if(some_ship->getName() == BS){
+					cell->BackColor = colors[BS];
+				}
+				else if (some_ship->getName() == CR) {
+					cell->BackColor = colors[CR];
+				}
+				else if (some_ship->getName() == DS) {
+					cell->BackColor = colors[DS];
+				}
+				else if (some_ship->getName() == SB) {
+					cell->BackColor = colors[SB];
+				}
 			}
 		}
-		void CreateShip(int length, Panel^ panel) {
-			//if (checker["battleship"] == false) {
-			//	//ship = gcnew Battleship()
-			//}
+		void CreateTemplateShips() {
 			for each (KeyValuePair<String^, int> kvp in countOfShips) {
 				
 				String^ key = kvp.Key;
@@ -401,7 +447,7 @@ namespace SeaBattle {
 		}
 		void StartPlacement() {
 			InitializeShips();
-
+			CreateTemplateShips();
 			// Код для размещения кораблей игроком
 		}
 

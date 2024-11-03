@@ -33,6 +33,9 @@ public:
     List<List<int>^>^ where_are_you() override {
         return coordinates;
     }
+    String^ getName() override {
+        return name;
+    }
 
 
 #pragma endregion
