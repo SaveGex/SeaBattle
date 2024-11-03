@@ -3,6 +3,9 @@
 #include <ctime>
 #include "Ship.h"
 #include "battleship.h"
+#include "Cruisers.h"
+#include "Destroyers.h"
+#include "Submarines.h"
 
 namespace SeaBattle {
 
@@ -288,7 +291,7 @@ namespace SeaBattle {
 
 						for (int k = 0; k < new_coords->Count; k++) { // that cycle are exists for don't leave of the limits of list
 
-							if (new_coords[k]->Contains(where_are_ship[i]->default[0]) || new_coords[k]->Contains(where_are_ship[i]->default[1])) {
+							if (new_coords[k]->default[0] == where_are_ship[j]->default[0] && new_coords[k]->default[1] == where_are_ship[j]->default[1]) {
 								return false;
 							}
 						}
@@ -405,18 +408,25 @@ namespace SeaBattle {
 
 					if (key == BS) {
 
-						Ship^ ship = gcnew Battleship(buf, 4, BS);
+						Ship^ ship = gcnew Battleship(buf, sizeOfShips[BS], BS);
 						ships_array->Add(ship);
 						Mark_the_ship(ship);
 					}
 					else if (key == CR) {
 
+						Ship^ ship = gcnew Cruisers(buf, sizeOfShips[CR], CR);
+						ships_array->Add(ship);
+						Mark_the_ship(ship);
 					}
 					else if (key == DS) {
-
+						Ship^ ship = gcnew Destroyers(buf, sizeOfShips[DS], DS);
+						ships_array->Add(ship);
+						Mark_the_ship(ship);
 					}
 					else if (key == SB) {
-
+						Ship^ ship = gcnew Submarines(buf, sizeOfShips[SB], SB);
+						ships_array->Add(ship);
+						Mark_the_ship(ship);
 					}
 				}
 				// Do something with key and value

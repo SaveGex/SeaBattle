@@ -124,17 +124,23 @@
   <ItemGroup>
     <ClCompile Include="battleship.cpp" />
     <ClCompile Include="Battlfield.cpp" />
+    <ClCompile Include="Cruisers.cpp" />
+    <ClCompile Include="Destroyers.cpp" />
     <ClCompile Include="Field.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Ship.cpp" />
+    <ClCompile Include="Submarines.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="battleship.h" />
     <ClInclude Include="Battlfield.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="Cruisers.h" />
+    <ClInclude Include="Destroyers.h" />
     <ClInclude Include="Field.h" />
     <ClInclude Include="Ship.h" />
+    <ClInclude Include="Submarines.h" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Battlfield.resx">

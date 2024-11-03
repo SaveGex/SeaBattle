@@ -30,6 +30,15 @@
     <ClCompile Include="Field.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Cruisers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Destroyers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Submarines.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Battlfield.h">
@@ -42,6 +51,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Field.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cruisers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Destroyers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Submarines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
