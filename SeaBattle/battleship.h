@@ -30,7 +30,7 @@ public:
 		return true;
 	}
 
-    List<List<int>^>^ where_are_you() override {
+    List<List<int>^>^ your_coords() override {
         return coordinates;
     }
     String^ getName() override {

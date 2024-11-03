@@ -27,7 +27,9 @@ protected:
 	List<List<int>^>^ get_coord() {
 		return coordinates;
 	}
-	virtual ~Ship();
+	virtual ~Ship() {
+
+	}
 public:
 	Ship(List<List<int>^>^ coords_X_Y, int length, String^ name) : length{ length }, name{ name }, coordinates{ coords_X_Y } {
 		name_size = name->Length;
@@ -43,7 +45,7 @@ public:
 	// i want to do parent class where was that variables and info about him hits. 
 	// if he still alive i should can find out about it
 	virtual bool was_hitted(int X, int Y) abstract;
-	virtual List<List<int>^>^ where_are_you() abstract;
+	virtual List<List<int>^>^ your_coords() abstract;
 	virtual String^ getName() abstract;
 };
 
