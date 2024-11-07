@@ -33,7 +33,7 @@ public:
     List<List<int>^>^ your_coords() override {
         return coordinates;
     }
-    String^ getName() override {
+    String^ get_Name() override {
         return name;
     }
 
