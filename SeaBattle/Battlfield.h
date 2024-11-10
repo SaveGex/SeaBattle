@@ -6,6 +6,9 @@
 #include "Cruisers.h"
 #include "Destroyers.h"
 #include "Submarines.h"
+
+
+
 //+-----------------------------+
 //|all descriptions will be here|
 //+-----------------------------+
@@ -53,7 +56,8 @@ namespace SeaBattle {
 		GameStage currentStage = GameStage::Setup;
 
 		List < Ship ^ > ^ ships_array = gcnew List < Ship ^ > ();
-
+		List < Ship^ >^ user_field_ships_array = gcnew List < Ship^ >();
+		List<List<int>^>^ view_coordinates = gcnew List<List<int>^>;
 		/*
 		   1 ship - a row of 4 cells(“battleship” or “four - deck”)
 		   2 ships - a row of 3 squares(“cruisers” or “three - deckers”)
@@ -85,6 +89,13 @@ namespace SeaBattle {
 		   bool dragging = false;
 		   Point offset;
 		//+----------------------+
+		
+		int simp_margin = 1;
+
+		PictureBox^ buffer_Cell = nullptr;
+		Ship^ choosen_ship = nullptr;
+
+
 		void init_SizeOfShips() {
 			sizeOfShips->Add(BS, 4);
 			sizeOfShips->Add(CR, 3);
@@ -132,7 +143,7 @@ namespace SeaBattle {
         System::Windows::Forms::Panel^ MainFieldUser1;
 		System::Windows::Forms::Panel^ ShipsField;
 		System::Windows::Forms::Panel^ panelGrid2;
-		System::Windows::Forms::Panel^ unknown_ship;
+		System::Windows::Forms::Panel^ unknown_ship_panel;
 
 		//+-----------------------------------------+
 		   System::Windows::Forms::Panel^ BS_P;
@@ -157,31 +168,33 @@ namespace SeaBattle {
 			this->ShipsField = (gcnew System::Windows::Forms::Panel());
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->SuspendLayout();
+			int sizeFieldY = 300 + (simp_margin * 10), sizeFieldX = 300 + (simp_margin * 10);
+			int corrections = simp_margin * 10;
 			// 
 			// MainFieldUser1
 			// 
 			this->MainFieldUser1->Location = System::Drawing::Point(12, 21);
 			this->MainFieldUser1->Name = L"MainFieldUser1";
-			this->MainFieldUser1->Size = System::Drawing::Size(300, 300);
+			this->MainFieldUser1->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
 			this->MainFieldUser1->TabIndex = 0;
 			// 
 			// panelGrid2
 			// 
 			this->panelGrid2->Location = System::Drawing::Point(0, 0);
 			this->panelGrid2->Name = L"panelGrid2";
-			this->panelGrid2->Size = System::Drawing::Size(200, 100);
+			this->panelGrid2->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
 			this->panelGrid2->TabIndex = 0;
 			// 
 			// ShipsField
 			// 
 			this->ShipsField->Location = System::Drawing::Point(0, 0);
 			this->ShipsField->Name = L"ShipsField";
-			this->ShipsField->Size = System::Drawing::Size(200, 100);
+			this->ShipsField->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
 			this->ShipsField->TabIndex = 0;
 			// 
 			// button1
 			// 
-			this->button1->Location = System::Drawing::Point(358, 363);
+			this->button1->Location = System::Drawing::Point(358 + corrections, 363 + corrections);
 			this->button1->Name = L"button1";
 			this->button1->Size = System::Drawing::Size(75, 23);
 			this->button1->TabIndex = 1;
@@ -194,16 +207,13 @@ namespace SeaBattle {
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->BackColor = System::Drawing::SystemColors::ActiveCaption;
-			this->ClientSize = System::Drawing::Size(792, 398);
+			this->ClientSize = System::Drawing::Size(792 + corrections, 398 + corrections);
 			this->Controls->Add(this->button1);
 			this->Controls->Add(this->MainFieldUser1);
 			this->Name = L"Battlfield";
 			this->Text = L"Battleship Game";
 			this->ResumeLayout(false);
-			//
-			//Global events
-			this->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseMove);
-			this->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseUp);
+
 		}
 
 #pragma region some initialization
@@ -223,18 +233,20 @@ namespace SeaBattle {
 				CreateGrid(10, 10, panelGrid2);
 			}
 		}
-		void InitializeShips() {
+		void InitializeShips() 
+		{
+			if (currentStage == GameStage::Placement) {
+				this->ShipsField = gcnew System::Windows::Forms::Panel();
+				this->ShipsField->Location = System::Drawing::Point(470, 21);
+				this->ShipsField->Name = L"Ship";
+				this->ShipsField->Size = System::Drawing::Size(300, 300);
+				this->ShipsField->TabIndex = 1;
 
-			this->ShipsField = gcnew System::Windows::Forms::Panel();
-			this->ShipsField->Location = System::Drawing::Point(470, 21);
-			this->ShipsField->Name = L"Ship";
-			this->ShipsField->Size = System::Drawing::Size(300, 300);
-			this->ShipsField->TabIndex = 1;
+				// Add the panel to the form
+				this->Controls->Add(this->ShipsField);
 
-			// Add the panel to the form
-			this->Controls->Add(this->ShipsField);
-
-			CreateGrid(10, 10, ShipsField);
+				CreateGrid(10, 10, ShipsField);
+			}
 		}
         // function which create some grid
         void CreateGrid(int rows, int cols, Panel^ panel)
@@ -245,12 +257,16 @@ namespace SeaBattle {
                 {
                     PictureBox^ cell = gcnew PictureBox();
                     cell->Size = System::Drawing::Size(30, 30);
-                    cell->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-                    cell->Location = System::Drawing::Point(j * 30, i * 30);
+                    cell->BorderStyle = System::Windows::Forms::BorderStyle::None;
+					int x = j * (simp_margin + 30), y = i * (simp_margin + 30);
+                    cell->Location = System::Drawing::Point(x, y);
                     cell->BackColor = System::Drawing::Color::LightBlue;
                     cell->Tag = gcnew System::Drawing::Point(i, j);
 					cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
+					if (panel == MainFieldUser1) {
+						cell->MouseEnter += gcnew System::EventHandler(this, &Battlfield::MouseEnter_Cell);
 
+					}
 
                     panel->Controls->Add(cell); // add the cell on the panel
                 }
@@ -261,6 +277,36 @@ namespace SeaBattle {
 #pragma region create random ships
 
 		#pragma region auxiliary functions
+
+
+		void to_tidy_panel_void_ships_mark(Panel^ tidy_panel, List<Ship^>^ arrays_for_check) {
+			if (arrays_for_check->Count == 0) {
+				for each (Control ^ control in tidy_panel->Controls) {
+					PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+					pictureBox->BackColor = System::Drawing::Color::LightBlue;
+				}
+				return;
+			}
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell(i, j, arrays_for_check);
+					if ((some_ship != nullptr) ? some_ship->is_that_coord(i, j) == false : true) {
+
+						for each(Control ^ control in tidy_panel->Controls) {
+							PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+
+							if (pictureBox != nullptr) {
+								Point^ tagPoint = dynamic_cast<Point^>(pictureBox->Tag);
+								if (tagPoint != nullptr && tagPoint->X == i && tagPoint->Y == j) {
+									pictureBox->BackColor = System::Drawing::Color::LightBlue;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		//+--------------------------------------------------------------------------+
 		//|in this code that function using for initialize coordinates random ships. |
 		//|and somehow ships randomize always in the same direction... idk why.		 |
@@ -357,7 +403,7 @@ namespace SeaBattle {
 		//|And that function do important role.							 |
 		//|It create events for need cels and connects them to each other|
 		//+--------------------------------------------------------------+
-		void Mark_the_ship(Ship^ some_ship) {
+		void Mark_the_ship(Ship^ some_ship, System::Windows::Forms::Panel^ some_panel) {
 			//general moment where i use attribute from header of function for getting the coords.
 			List<List<int>^>^ coords = some_ship->your_coords();
 			List<PictureBox^>^ list_with_links_to_Cells = gcnew List<PictureBox^>();
@@ -368,10 +414,11 @@ namespace SeaBattle {
 
 
 				//cycle for find need cell by tag of declared the element. I have this element "ShipsField"
-				for each (Control ^ control in ShipsField->Controls) {
+				for each (Control ^ control in some_panel->Controls) {
 					PictureBox^ cell = dynamic_cast<PictureBox^>(control); 
+					Point^ cellTag = safe_cast<Point^>(cell->Tag);
 
-					if (cell != nullptr && (cell->Location.X / 30) == x && (cell->Location.Y / 30) == y) {
+					if (cell != nullptr && cellTag->X == x && cellTag->Y == y) {
 						list_with_links_to_Cells->Add(cell);
 					}
 
@@ -382,9 +429,10 @@ namespace SeaBattle {
 			//to what color i want to draw the cell
 			for each (PictureBox ^ cell in list_with_links_to_Cells) {
 				if(some_ship->get_Name() == BS){
-					cell->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::init_unknown_ship);
 					cell->BackColor = colors[BS];
 					cell->Name = some_ship->get_Name() + some_ship->get_number_of_ships().ToString();
+					//cell->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseDown);
+
 					//////////cell->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseUp);
 					//////////cell->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseMove);
 
@@ -408,13 +456,13 @@ namespace SeaBattle {
 		//+----------------------------------------------------+
 		//| its like search the ship by transmitted coordinates|
 		//+----------------------------------------------------+
-		Ship^ initialize_ship_by_the_help_of_coords_by_cell(int x, int y){
+		Ship^ initialize_ship_by_the_help_of_coords_by_cell(int x, int y, List<Ship^>^ some_array_ships){
 
 			for (int i = 0; i < ships_array->Count; i++) {
 				List<List<int>^>^ coords_ship = ships_array[i]->your_coords();
 				//check coords
 				for (int j = 0; j < coords_ship->Count; j++) {
-					if (coords_ship[j]->default[0] == x, coords_ship[j]->default[1] == y) {
+					if (coords_ship[j]->default[0] == x && coords_ship[j]->default[1] == y) {
 						return ships_array[i];
 					}
 				}
@@ -425,85 +473,94 @@ namespace SeaBattle {
 
 #pragma region Pin ship to the cursor
 
-		void init_unknown_ship(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-			PictureBox^ clickedCell = dynamic_cast<PictureBox^>(sender);
-			Ship^ unknown_ship = initialize_ship_by_the_help_of_coords_by_cell(clickedCell->Location.X/30, clickedCell->Location.Y / 30);
+		//void init_unknown_ship_panel(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e, Ship^ unknown_ship) {
+		//	PictureBox^ clickedCell = safe_cast<PictureBox^>(sender);
+		//	unknown_ship = initialize_ship_by_the_help_of_coords_by_cell(clickedCell->Location.X / 30, clickedCell->Location.Y / 30);
 
-			//init
-			this->unknown_ship = gcnew System::Windows::Forms::Panel;
-			this->unknown_ship->Location = System::Drawing::Point(e->Location.X, e->Location.Y);
-			this->unknown_ship->Name = unknown_ship->get_Name() + unknown_ship->get_number_of_ships();
+		//	if (clickedCell != nullptr &&
+		//		currentStage == GameStage::Placement && 
+		//		clickedCell->BackColor != System::Drawing::Color::LightBlue &&
+		//		e->Button == System::Windows::Forms::MouseButtons::Left) {
 
-			if (unknown_ship->get_Direction() == 'X') {
-				this->unknown_ship->Size = System::Drawing::Size(unknown_ship->get_Length()*30, 30);
-			}
-			else if (unknown_ship->get_Direction() == 'Y') {
-				this->unknown_ship->Size = System::Drawing::Size(30, unknown_ship->get_Length()*30);
-			}
-			else {
-				this->unknown_ship->Size = System::Drawing::Size(30, 30);
+		//		unknown_ship_panel = gcnew Panel();
+		//		unknown_ship_panel->Size = System::Drawing::Size(80, 80);
+		//		unknown_ship_panel->Location = System::Drawing::Point(e->X + 50, e->Y + 50);
 
-			}
-			this->unknown_ship->TabIndex = 10;
+		//		if (unknown_ship->get_Direction() == 'X') {
+		//			this->unknown_ship_panel->Size = System::Drawing::Size(unknown_ship->get_Length() * 30, 30);
+		//		}
+		//		else if (unknown_ship->get_Direction() == 'Y') {
+		//			this->unknown_ship_panel->Size = System::Drawing::Size(30, unknown_ship->get_Length() * 30);
+		//		}
+		//		else {
+		//			this->unknown_ship_panel->Size = System::Drawing::Size(30, 30);
+		//		}
+		//		//unknown_ship_panel->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseMove);
 
-			// Add the panel to the form
-			this->Controls->Add(this->unknown_ship);
+		//		this->Controls->Add(unknown_ship_panel);
+		//		unknown_ship_panel->BringToFront();
+		//		this->Invalidate(); // Оновлює форму
 
-			int rows = (unknown_ship->get_Direction() == 'X') ? unknown_ship->get_Length() : 1;
-			int cols = (unknown_ship->get_Direction() == 'Y') ? unknown_ship->get_Length() : 1;
 
-			Create_unknown_ship_panel(rows, cols, unknown_ship, this->unknown_ship);
-		}
+		//		int rows = (unknown_ship->get_Direction() == 'X') ? unknown_ship->get_Length() : 1;
+		//		int cols = (unknown_ship->get_Direction() == 'Y') ? unknown_ship->get_Length() : 1;
+
+		//		Create_unknown_ship_panel(rows, cols, unknown_ship, unknown_ship_panel);
+		//	}
+		//	else{
+		//		return;
+		//	}
+		//}
 		
-		void Create_unknown_ship_panel(int rows, int cols, Ship^ unknown_ship, System::Windows::Forms::Panel^ US) {
-			String^ name = unknown_ship->get_Name();
-			System::Drawing::Color color = (colors->ContainsKey(name)) ? colors[name] : System::Drawing::Color::BlanchedAlmond;
-			//create
-			for (int i = 0; i < rows; ++i) {
-				for (int j = 0; j < cols; ++j) {
-					PictureBox^ cell = gcnew PictureBox();
-					cell->Size = System::Drawing::Size(30, 30);
-					cell->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-					cell->Location = System::Drawing::Point(j * 30, i * 30);
-					cell->BackColor = color;
-					cell->Tag = gcnew System::Drawing::Point(i, j);
-					cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
+		//void Create_unknown_ship_panel(int rows, int cols, Ship^ unknown_ship, System::Windows::Forms::Panel^ USP) {
+		//	String^ name = unknown_ship->get_Name();
+		//	System::Drawing::Color color = (colors->ContainsKey(name)) ? colors[name] : System::Drawing::Color::BlanchedAlmond;
+		//	//create
+		//	for (int i = 0; i < rows; ++i) {
+		//		for (int j = 0; j < cols; ++j) {
+		//			PictureBox^ cell = gcnew PictureBox();
+		//			cell->Size = System::Drawing::Size(30, 30);
+		//			cell->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+		//			cell->Location = System::Drawing::Point(j * 30, i * 30);
+		//			cell->BackColor = color;
+		//			cell->Tag = gcnew System::Drawing::Point(i, j);
+		//			cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
+		//			
+		//			USP->Controls->Add(cell); // add the cell on the panel
 
-					US->Controls->Add(cell); // add the cell on the panel
+		//		}
+		//	}
+		//	//US->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseDown);
+		//	//US->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseUp);
+		//	//US->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseMove);
 
-				}
-			}
-			//US->MouseDown += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseDown);
-			//US->MouseUp += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseUp);
-			//US->MouseMove += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::panel_MouseMove);
-
-		}
-
-
-
-		bool pin_choose_ship(int x, int y, Ship^ some_ship, Object^ sender, MouseEventArgs^ e) {
-
-			for (int i = 0; i < ships_array->Count; i++) {
-				if (ships_array[i]->is_that_coord(x, y)) {
-
-					if (ships_array[i]->get_Name() == BS) {
-						init_unknown_ship(some_ship, e);
-					}
-					else if (ships_array[i]->get_Name() == CR) {
-
-					}
-					else if (ships_array[i]->get_Name() == DS){
-
-					}
-					else if (ships_array[i]->get_Name() == SB) {
-
-					}
+		//}
 
 
-				}
-			}
-			return true;
-		}
+
+		//bool pin_choose_ship(int x, int y, Ship^ some_ship, Object^ sender, MouseEventArgs^ e) {
+
+		//	for (int i = 0; i < ships_array->Count; i++) {
+		//		if (ships_array[i]->is_that_coord(x, y)) { // by coordinates
+
+		//			if (ships_array[i]->get_Name() == BS) {
+		//				init_unknown_ship_panel(sender, e, some_ship);
+		//			}
+		//			else if (ships_array[i]->get_Name() == CR) {
+
+		//			}
+		//			else if (ships_array[i]->get_Name() == DS){
+
+		//			}
+		//			else if (ships_array[i]->get_Name() == SB) {
+
+		//			}
+
+
+		//		}
+		//	}
+		//	return true;
+		//}
 
 #pragma endregion /*Pin ship to the cursor*/
 
@@ -521,23 +578,23 @@ namespace SeaBattle {
 
 						Ship^ ship = gcnew Battleship(buf, sizeOfShips[BS], BS);
 						ships_array->Add(ship);
-						Mark_the_ship(ship);
+						Mark_the_ship(ship, ShipsField);
 					}
 					else if (key == CR) {
 
 						Ship^ ship = gcnew Cruisers(buf, sizeOfShips[CR], CR);
 						ships_array->Add(ship);
-						Mark_the_ship(ship);
+						Mark_the_ship(ship, ShipsField);
 					}
 					else if (key == DS) {
 						Ship^ ship = gcnew Destroyers(buf, sizeOfShips[DS], DS);
 						ships_array->Add(ship);
-						Mark_the_ship(ship);
+						Mark_the_ship(ship, ShipsField);
 					}
 					else if (key == SB) {
 						Ship^ ship = gcnew Submarines(buf, sizeOfShips[SB], SB);
 						ships_array->Add(ship);
-						Mark_the_ship(ship);
+						Mark_the_ship(ship, ShipsField);
 					}
 				}
 				// Do something with key and value
@@ -581,16 +638,60 @@ namespace SeaBattle {
 		}
 
 #pragma region events
+		void paint_choosen_ship_while(System::Object^ sender, System::EventArgs^ e) {
+			List<List<int>^>^ view_coordinates_temp = gcnew List<List<int>^>;
+			PictureBox^ enterCell = dynamic_cast<PictureBox^>(sender);
+			Point^ CellTag = dynamic_cast<Point^>(enterCell->Tag);
 
+			int x = (choosen_ship->get_Direction() == 'X') ? choosen_ship->get_Length() : 1;
+			int y = (choosen_ship->get_Direction() == 'Y') ? choosen_ship->get_Length() : 1;
+			List<List<int>^>^ choosen_ship_coords = choosen_ship->your_coords();
+
+			bool addDirX = (choosen_ship_coords[0]->default[0] == choosen_ship_coords[choosen_ship->get_Length() - 1]->default[0]) ? false : true;
+			bool addDirY = (choosen_ship_coords[0]->default[1] == choosen_ship_coords[choosen_ship->get_Length() - 1]->default[1]) ? false : true;
+
+			int i = 0, j = 0;
+			while(i < x && i >= 0){
+				i++;
+				while(j < y && j >= 0) {
+					j++;
+					List<int>^ XY = gcnew List<int>;
+					int X_coord = (addDirX) ? CellTag->X + i : CellTag->X;
+					int Y_coord = (addDirY) ? CellTag->Y + j : CellTag->Y;
+					XY->Add(X_coord);
+					XY->Add(Y_coord);
+
+					view_coordinates_temp->Add(XY);
+				}
+				j = 0;
+			}
+
+			for each (List<int> ^ XY in view_coordinates_temp) {
+				for each (Control ^ control in MainFieldUser1->Controls) {
+					PictureBox^ cell = dynamic_cast<PictureBox^>(control);
+					Point^ tempCellTag = dynamic_cast<Point^>(cell->Tag);
+
+					if (tempCellTag != nullptr &&
+						tempCellTag->X == XY->default[0] &&
+						tempCellTag->Y == XY->default[1]
+						) {
+						cell->BackColor = System::Drawing::Color(colors[choosen_ship->get_Name()]);
+					}
+				}
+			}
+			view_coordinates = view_coordinates_temp;
+		}
+		void MouseEnter_Cell(System::Object^ sender, System::EventArgs^ e) {
+			if (dragging) {
+				to_tidy_panel_void_ships_mark(MainFieldUser1, user_field_ships_array);
+
+				paint_choosen_ship_while(sender, e);
+			}
+		}
 		//+------------------------------------------EVENTS----------------------------------------------+
 		//System::Void Battlfield::panel_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
 
 		//}
-		void panel_MouseMove(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-			while (dragging) {
-				this->unknown_ship->Location = System::Drawing::Point(e->Location.X, e->Location.Y);
-			}
-		}
 		//System::Void Battlfield::panel_MouseUp(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
 
 		//}
@@ -598,35 +699,65 @@ namespace SeaBattle {
 
 		//void InitiatorPanel_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
 		//	if (e->Button == System::Windows::Forms::MouseButtons::Left) {
-		//		unknown_ship = gcnew Panel();
-		//		unknown_ship->Size = System::Drawing::Size(80, 80);
-		//		unknown_ship->BackColor = System::Drawing::Color::Blue;
-		//		unknown_ship->Location = System::Drawing::Point(e->X + 50, e->Y + 50);
+		//		unknown_ship_panel = gcnew Panel();
+		//		unknown_ship_panel->Size = System::Drawing::Size(80, 80);
+		//		unknown_ship_panel->BackColor = System::Drawing::Color::;
+		//		unknown_ship_panel->Location = System::Drawing::Point(e->X + 50, e->Y + 50);
+		//init
+		/*
+		if (unknown_ship->get_Direction() == 'X') {
+			this->unknown_ship_panel->Size = System::Drawing::Size(unknown_ship->get_Length() * 30, 30);
+		}
+		else if (unknown_ship->get_Direction() == 'Y') {
+			this->unknown_ship_panel->Size = System::Drawing::Size(30, unknown_ship->get_Length() * 30);
+		}
+		else {
+			this->unknown_ship_panel->Size = System::Drawing::Size(30, 30);
+		}
+		
+		int rows = (unknown_ship->get_Direction() == 'X') ? unknown_ship->get_Length() : 1;
+		int cols = (unknown_ship->get_Direction() == 'Y') ? unknown_ship->get_Length() : 1;*/
 
+		
 
-		//		this->Controls->Add(unknown_ship);
+		//		this->Controls->Add(unknown_ship_panel);
 
-		//		unknown_ship->BringToFront();
-		//		unknown_ship->Parent = this;
+		//		unknown_ship_panel->BringToFront();
+		//		unknown_ship_panel->Parent = this;
 		//		dragging = true;
 
 		//		offset = Point(e->X, e->Y);
 		//	}
 		//}
+
 		//void panel_MouseMove(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-		//	if (dragging && unknown_ship != nullptr) {
+		//	if (dragging && unknown_ship_panel != nullptr) {
 		//		// Переміщуємо новостворений елемент разом із мишею
-		//		unknown_ship->Left = e->X - offset.X;
-		//		unknown_ship->Top = e->Y - offset.Y;
+		//		unknown_ship_panel->Left = e->X - offset.X;
+		//		unknown_ship_panel->Top = e->Y - offset.Y;
 		//	}
 		//}
+		
+		//void panel_MouseDown(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
+		//	PictureBox^ clickedCell = safe_cast<PictureBox^>(sender);
+		//	Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell((clickedCell->Location.X / 30), (clickedCell->Location.Y / 30));
 
-		void panel_MouseUp(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
-			if (e->Button == System::Windows::Forms::MouseButtons::Left) {
-				// Завершуємо перетягування
-				dragging = false;
-			}
-		}
+		//	pin_choose_ship((clickedCell->Location.X / 30), (clickedCell->Location.Y / 30), some_ship, sender, e);
+
+		//	dragging = true;
+
+
+
+		//}
+
+		//void panel_MouseUp(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e) {
+		//	if (e->Button == System::Windows::Forms::MouseButtons::Left) {
+		//		// Завершуємо перетягування
+		//		dragging = false;
+		//		unknown_ship_panel->Refresh();
+		//		delete unknown_ship_panel;
+		//	}
+		//}
 		void Battlfield::OnCellMouseClick(Object^ sender, MouseEventArgs^ e){
 
 			if (currentStage == GameStage::Setup) {
@@ -639,12 +770,35 @@ namespace SeaBattle {
 					Panel^ parentPanel = dynamic_cast<Panel^>(clickedCell->Parent); 
 					// Checking, to which the button was pressed
 					if (parentPanel == MainFieldUser1) { 
-						MessageBox::Show(clickedCell->Tag->ToString());
+						if (dragging) {
+							Point^ cellTag = safe_cast<Point^>(buffer_Cell->Tag);
+							Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell(cellTag->X, cellTag->Y, ships_array);
+							some_ship->change_coordinates(view_coordinates);
+
+							Mark_the_ship(some_ship, MainFieldUser1);
+							user_field_ships_array->Add(some_ship);
+							dragging = false;
+						}
 					} 
 					else if (parentPanel == ShipsField) { 
-						Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell((clickedCell->Location.X / 30), (clickedCell->Location.Y / 30));
-						pin_choose_ship((clickedCell->Location.X / 30), (clickedCell->Location.Y / 30), some_ship, sender, e);
+						Point^ cellTag = safe_cast<Point^>(clickedCell->Tag);
+						Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell(cellTag->X, cellTag->Y, ships_array);
 
+						if (dragging == false) {
+							buffer_Cell = clickedCell;
+							dragging = true;
+						}
+						else {
+							dragging = false;
+						}
+						if (some_ship != nullptr) {
+							choosen_ship = some_ship;
+							for each (Control ^ control in MainFieldUser1->Controls) {
+								PictureBox^ cell = dynamic_cast<PictureBox^>(control);
+								//cell->BackColor = System::Drawing::Color::Blue;
+								cell->BorderStyle = System::Windows::Forms::BorderStyle::Fixed3D;
+							}
+						}
 					} 
 				}
 			}

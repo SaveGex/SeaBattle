@@ -38,49 +38,28 @@ protected:
 	}
 	Char definition_of_axiss() {// used only at initializing time
 		Tuple<int, int>^ root_coordinate = Tuple::Create(coordinates[0]->default[0], coordinates[0]->default[1]);
-		Dictionary<String^, bool>^ checker = gcnew Dictionary<String^, bool>();
-		checker->Add("X", false);
-		checker->Add("Y", false);
 
-
-		bool answer = false;
-		for each (String ^ key in gcnew List<String^>(checker->Keys)) {
-			for (int i = 0; i < coordinates->Count; i++) {//just one
-				//right and left
-				if (i == 0) {
-					if (((root_coordinate->Item1 + i) == coordinates[i]->default[0] && root_coordinate->Item2 == coordinates[i]->default[1]) ||
-						((root_coordinate->Item1 - i) == coordinates[i]->default[0] && root_coordinate->Item2 == coordinates[i]->default[1])) {
-						answer = true;
-					}
-					else {
-						answer = false;
-						break;
-					}
-				}
-				//top and bottom
-				else if (i == 1) {
-					if ((root_coordinate->Item1 == coordinates[i]->default[0] && (root_coordinate->Item2 + i) == coordinates[i]->default[1]) ||
-						(root_coordinate->Item1 == coordinates[i]->default[0] && (root_coordinate->Item2 - i) == coordinates[i]->default[1])) {
-						answer = true;
-					}
-					else {
-						answer = false;
-						break;
-					}
-				}
+		Char answer = '0';
+		for (int i = 0; i < coordinates->Count; i++) {//just one
+			if ((root_coordinate->Item1 + i == coordinates[i]->default[0] || 
+				root_coordinate->Item1 - i == coordinates[i]->default[0]) &&
+				root_coordinate->Item2 == coordinates[i]->default[1]
+				) {
+				answer = 'X';
 			}
-			checker[key] = answer;
+			else if ((root_coordinate->Item2 + i == coordinates[i]->default[1] || 
+				root_coordinate->Item2 - i == coordinates[i]->default[1]) &&
+				root_coordinate->Item1 == coordinates[i]->default[0]
+				) {
+				answer = 'Y';
+			}
+			else {
+				answer = '0';
+			}
 		}
 		
-		for each (KeyValuePair<String^, bool> kvp in checker) {
-			if (kvp.Key == "X" && kvp.Value == true) {
-				return 'X';
-			}
-			else if (kvp.Key == "Y" && kvp.Value == true) {
-				return 'Y';
-			}
-			return '0';
-		}
+		return answer;
+		
 	}
 	virtual ~Ship() {
 
@@ -110,7 +89,9 @@ public:
 		}
 		return false;
 	}
-	Field field;
+	void change_coordinates(List<List<int>^>^ some_coords) {
+		coordinates = some_coords;
+	}
 	//////void operator()(int coordX, int coordY, int length, char* name);
 	//virtual void operator=(Ship Robj) = 0;
 	// i want to do parent class where was that variables and info about him hits. 
