@@ -81,7 +81,7 @@ public:
 		return length;
 	}
 	// and there check array of coordinates the ship for return "true" if coordinates is equal or false if coords isn't equal
-	virtual bool is_that_coord(int X, int Y) {
+	virtual bool is_that_your_coord(int X, int Y) {
 		for each (List<int>^ X_and_Y in coordinates) {
 			if (X_and_Y[0] == X && X_and_Y[1] == Y) {
 				return true;
@@ -91,6 +91,9 @@ public:
 	}
 	void change_coordinates(List<List<int>^>^ some_coords) {
 		coordinates = some_coords;
+	}
+	void change_direction() {
+		direction = (direction = 'X') ? 'Y' : 'X';
 	}
 	//////void operator()(int coordX, int coordY, int length, char* name);
 	//virtual void operator=(Ship Robj) = 0;

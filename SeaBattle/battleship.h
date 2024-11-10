@@ -26,9 +26,9 @@ public:
     int get_number_of_ships() {
         return number;
     }
-	bool is_that_coord(int X, int Y) override {
-		return true;
-	}
+	//bool is_that_your_coord(int X, int Y) override {
+	//	return true;
+	//}
 
     List<List<int>^>^ your_coords() override {
         return coordinates;
