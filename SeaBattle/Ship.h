@@ -1,16 +1,15 @@
 #pragma once
-#include "Field.h"
 
 using namespace System::Collections::Generic;
 using namespace System;
 
-ref class Ship abstract{
+ref class Ship abstract {
 
 private:
 	static int number = 0;
 
 protected:
-	//+-------------------------------------------------------------------------+
+	//+---------------------description of the class----------------------------+
 	//|i will make that for understanding where are ship.						|
 	//|left and bottom point for coordinates.									|
 	//|and perhaps will need to do right abd top point for more precision. -made|
@@ -19,7 +18,7 @@ protected:
 	int length;
 	String^ name;
 	size_t name_size;
-	//+-----------------------+
+	//+--------ALWAYS---------+
 	//|first is x, second is y|
 	//+-----------------------+
 	List<List<int>^>^ coordinates;
@@ -29,6 +28,8 @@ protected:
 	//|dir = Y Y-axis.								  |
 	//+-----------------------------------------------+
 	Char direction;
+	//+-------------------+
+	String^ identifier{};
 
 	static void addition_number() {
 		number++;
@@ -41,13 +42,13 @@ protected:
 
 		Char answer = '0';
 		for (int i = 0; i < coordinates->Count; i++) {//just one
-			if ((root_coordinate->Item1 + i == coordinates[i]->default[0] || 
+			if ((root_coordinate->Item1 + i == coordinates[i]->default[0] ||
 				root_coordinate->Item1 - i == coordinates[i]->default[0]) &&
 				root_coordinate->Item2 == coordinates[i]->default[1]
 				) {
 				answer = 'X';
 			}
-			else if ((root_coordinate->Item2 + i == coordinates[i]->default[1] || 
+			else if ((root_coordinate->Item2 + i == coordinates[i]->default[1] ||
 				root_coordinate->Item2 - i == coordinates[i]->default[1]) &&
 				root_coordinate->Item1 == coordinates[i]->default[0]
 				) {
@@ -57,9 +58,9 @@ protected:
 				answer = '0';
 			}
 		}
-		
+
 		return answer;
-		
+
 	}
 	virtual ~Ship() {
 
@@ -68,17 +69,21 @@ public:
 	Ship(List<List<int>^>^ coords_X_Y, int length, String^ name) : length{ length }, name{ name }, coordinates{ coords_X_Y } {
 		direction = definition_of_axiss();
 		name_size = name->Length;
-		
+		identifier = name + System::Convert::ToString(number);
+
 		addition_number();
 	}
 	Char get_Direction() {
 		return direction;
 	}
-	int get_number_of_ships() {
+	virtual int get_number_of_ships() {
 		return number;
 	}
 	int get_Length() {
 		return length;
+	}
+	String^ get_identifier() {
+		return identifier;
 	}
 	// and there check array of coordinates the ship for return "true" if coordinates is equal or false if coords isn't equal
 	virtual bool is_that_your_coord(int X, int Y) {
@@ -94,6 +99,12 @@ public:
 	}
 	void change_direction() {
 		direction = (direction = 'X') ? 'Y' : 'X';
+	}
+	virtual bool operator==(Ship^ comparing_ship) {
+		if (identifier == comparing_ship->get_identifier()) {
+			return true;
+		}
+		return false;
 	}
 	//////void operator()(int coordX, int coordY, int length, char* name);
 	//virtual void operator=(Ship Robj) = 0;

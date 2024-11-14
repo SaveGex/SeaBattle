@@ -126,7 +126,6 @@
     <ClCompile Include="Battlfield.cpp" />
     <ClCompile Include="Cruisers.cpp" />
     <ClCompile Include="Destroyers.cpp" />
-    <ClCompile Include="Field.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Ship.cpp" />
     <ClCompile Include="Submarines.cpp" />
@@ -138,7 +137,6 @@
     </ClInclude>
     <ClInclude Include="Cruisers.h" />
     <ClInclude Include="Destroyers.h" />
-    <ClInclude Include="Field.h" />
     <ClInclude Include="Ship.h" />
     <ClInclude Include="Submarines.h" />
   </ItemGroup>

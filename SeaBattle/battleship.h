@@ -23,7 +23,7 @@ public:
     static void addition_number() {
         number++;
     }
-    int get_number_of_ships() {
+    int get_number_of_ships() override {
         return number;
     }
 	//bool is_that_your_coord(int X, int Y) override {
