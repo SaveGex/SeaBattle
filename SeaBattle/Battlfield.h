@@ -62,11 +62,11 @@ namespace SeaBattle {
 
 		List < Ship^ >^ user_field_ships_array = gcnew List < Ship ^ >();
 
-		List < List < int > ^ > ^ view_coordinates = gcnew List < List < int > ^ >;
+		List < List < int > ^ > ^ view_coordinates = gcnew List < List < int > ^ >();
 
-		List < List < int > ^ > ^ buffer_coords = gcnew List < List < int > ^ >; // delete it when it doesn't needed
+		List < List < int > ^ > ^ buffer_coords = gcnew List < List < int > ^ >(); // delete it when it doesn't needed
 
-		List < Tuple < int, int > ^ > ^ required_coordinates = gcnew List<Tuple < int, int >^ >;
+		List < Tuple < int, int > ^ > ^ required_coordinates = gcnew List<Tuple < int, int >^ >();
 
 		//+-------------------------------------------------------------+
 		//|1 ship - a row of 4 cells(“battleship” or “four - deck”)     |
@@ -301,7 +301,6 @@ namespace SeaBattle {
 
 #pragma region create random ships
 
-		#pragma region auxiliary functions
 
 #pragma region Fucntions for tidy(pieces of functiong "to_tidy_panel_void_ships_mark")
 
@@ -314,6 +313,9 @@ namespace SeaBattle {
 			return false;
 		}
 
+		void to_clear_required_coords() {
+			required_coordinates->Clear();
+		}
 
 		bool here_has_ships(int x, int y, Panel^ tidy_panel, List<Ship^>^ array_for_check, List<Tuple<int, int>^>^ required_coords_temp) {
 			for each (Control ^ control in tidy_panel->Controls)
@@ -322,27 +324,70 @@ namespace SeaBattle {
 
 				if (pictureBox != nullptr) {
 					Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
-					//if (tag->X != x && tag->Y != y) {
-						for each (Ship ^ some_ship_from_array_for_check in array_for_check)
-						{
-							/*simentic error one and the same coordinate triggered that condition*/ // need to create list of exceptions' coordinates
-							//something wrong with that condition. Just read and check in debag
-							if (some_ship_from_array_for_check->is_that_your_coord(x, y) 
-								&& already_exist_required_point_tuple(required_coords_temp, tag->X, tag->Y) == false) {
-								return true;// i add occupied coordinates.
-								//if in array has at least just one ship with that coords
-							}
+					for each (Ship ^ some_ship_from_array_for_check in array_for_check)
+					{
+						/*simentic error one and the same coordinate triggered that condition*/ // need to create list of exceptions' coordinates
+						//something wrong with that condition. Just read and check in debag
+						if (some_ship_from_array_for_check->is_that_your_coord(x, y) 
+							&& !already_exist_required_point_tuple(required_coords_temp, tag->X, tag->Y) 
+							&& ((tag->X != 0 || tag->Y != 0) || required_coords_temp->Count > 0)) {
+							return true;// i add occupied coordinates.
+							//if in array has at least just one ship with that coords
 						}
-					//}
-					//else {
-					//	return true; // if first picture box when i met has mine coords
-					//}
+					}
+
 				}
 			}
 			return false; //coordinates is free.
 			//if coords are ready for use
 		}
+
+		void to_tidy_panel_void_ships_mark(Panel^ tidy_panel, List<Ship^>^ array_for_check) {
+			if (array_for_check->Count == 0) {
+				for each (Control ^ control in tidy_panel->Controls)
+				{
+					PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+					pictureBox->BackColor = System::Drawing::Color::LightBlue;
+				}
+				return;
+			}
+
+			//searching
+			List<Tuple<int, int>^>^ required_coordinates_temp = gcnew List<Tuple<int, int>^>();
+			for (int i = 0; i < rows; i++) {
+				for (int j = 0; j < cols; j++) {
+					if (here_has_ships(i, j, tidy_panel, array_for_check, required_coordinates_temp)) {
+						required_coordinates_temp->Add(Tuple::Create(i, j));
+					}
+				}
+			}
+
+			for (int i = 0; i < required_coordinates_temp->Count; i++) {
+				required_coordinates->Add(required_coordinates_temp[i]);
+			}
+			//painting
+			for each (Control ^ control in tidy_panel->Controls) {
+				PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+
+				if (pictureBox != nullptr) {
+					Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
+					bool ticket = true;
+					for each (Tuple<int, int> ^ required_coords_tuple in required_coordinates) {
+						if (tag->X == required_coords_tuple->Item1
+							&& tag->Y == required_coords_tuple->Item2) {
+							ticket = false;
+							break;
+						}
+					}
+					if (ticket) {
+						pictureBox->BackColor = System::Drawing::Color::LightBlue;
+					}
+				}
+			}
+		}
 #pragma endregion /*Fucntions for tidy(pieces of functiong "to_tidy_panel_void_ships_mark")*/
+
+#pragma region auxiliary functions
 
 
 		bool already_exists_in_field(Ship^ some_ship, List<Ship^>^ array_of_ships) {
@@ -357,50 +402,6 @@ namespace SeaBattle {
 			return false;
 		}
 
-
-		void to_tidy_panel_void_ships_mark(Panel^ tidy_panel, List<Ship^>^ array_for_check) {
-			if (array_for_check->Count == 0) {
-				for each (Control ^ control in tidy_panel->Controls) 
-				{
-					PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
-					pictureBox->BackColor = System::Drawing::Color::LightBlue;
-				}
-				return;
-			}
-			
-			//searching
-			List<Tuple<int, int>^>^ required_coordinates_temp = gcnew List<Tuple<int, int>^>;
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					if (here_has_ships(i, j, tidy_panel, array_for_check, required_coordinates_temp) == true) {
-						required_coordinates_temp->Add(Tuple::Create(i, j));
-					}
-				}
-			}
-
-			for (int i = 0; i < required_coordinates_temp->Count; i++) {
-				required_coordinates->Add(required_coordinates_temp[i]);
-			}
-			//painting
-			for each (Control ^ control in tidy_panel->Controls){
-				PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
-
-				if (pictureBox != nullptr) {
-					Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
-					bool ticket = true;
-					for each (Tuple<int, int>^ required_coords_tuple in required_coordinates) {
-						if (tag->X == required_coords_tuple->Item1
-							&& tag->Y == required_coords_tuple->Item2) {
-							ticket = false;
-							break;
-						}
-					}
-					if (ticket) {
-						pictureBox->BackColor = System::Drawing::Color::LightBlue;
-					}
-				}
-			}
-		}
 
 		//+--------------------------------------------------------------------------+
 		//|in this code that function using for initialize coordinates random ships. |
@@ -703,10 +704,15 @@ namespace SeaBattle {
 			array_that_uses_that_field->Add(choosen_ship);
 
 			Mark_the_ship(choosen_ship, in_which_panel_it_will_be_returned);
+			to_tidy_panel_void_ships_mark(MainFieldUser1, user_field_ships_array);
 
 			choosen_ship = nullptr;
 		}
 
+
+		//+---------------------------------------------------------------+
+		//|checking the axis X and Y if coords more ot less than need it  |
+		//+---------------------------------------------------------------+
 		Dictionary<String^, bool>^ coords_already_ready(List<List<int>^>^ list_of_coordinates) {
 			bool X_less_than_correct{};
 			bool X_more_than_correct{};
@@ -797,6 +803,10 @@ namespace SeaBattle {
 			}			
 		}
 
+		//+----------------------------------------------------------------------+
+		//|painting the changed coords so called "view_coords - global variable".|
+		//|Coords changs when cursor to entered in some cell.					 |
+		//+----------------------------------------------------------------------+
 		void paint_choosen_ship_while(System::Object^ sender, System::EventArgs^ e) {
 			try { (!choosen_ship) ? System::Convert::ToString("choosen_ship in function \"paint_choosen_ship_while\" is equal to nullptr") : "nothing"; }
 			catch (String^ errmsg) { return; }
@@ -903,17 +913,31 @@ namespace SeaBattle {
 							choosen_ship = nullptr;
 						}
 						else if (!dragging) {
-
 							Point^ clickedCellTag = safe_cast<Point^>(clickedCell->Tag);
 							Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell(clickedCellTag->X, clickedCellTag->Y, user_field_ships_array);
-
+							try {
+								if (!some_ship && !choosen_ship) {
+									throw System::Convert::ToString("Our ships for some reason: nullptr's");
+								}
+							}
+							catch (String^ errmsg) {
+								MessageBox::Show(errmsg);
+								to_tidy_panel_void_ships_mark(MainFieldUser1, user_field_ships_array);
+								return;
+							}
 							//comparisons such as "some_ship == nullptr" call the exception. So... !some_ship
 							if (some_ship && !choosen_ship) {
 								choosen_ship = some_ship;
 
+								to_clear_required_coords();
+
 								buffer_coords = some_ship->your_coords();
 
-								user_field_ships_array->Remove(some_ship);
+								for (int i = 0; i < user_field_ships_array->Count; i++) {
+									if (user_field_ships_array[i]->get_identifier() == some_ship->get_identifier()) {
+										user_field_ships_array->RemoveAt(i);
+									}
+								}
 							}
 							else if (choosen_ship && some_ship) {
 								return_choosen_ship_back(MainFieldUser1, user_field_ships_array);
