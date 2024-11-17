@@ -136,6 +136,7 @@
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="Cruisers.h" />
+    <ClInclude Include="CustomMessageBox.h" />
     <ClInclude Include="Destroyers.h" />
     <ClInclude Include="Ship.h" />
     <ClInclude Include="Submarines.h" />

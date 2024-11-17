@@ -151,10 +151,10 @@ public:
 		for each (List<int> ^ one_dim_arr in coordinates) {
 			if (one_dim_arr[0] == X && one_dim_arr[1] == Y) {
 				hitted_coords->Add(one_dim_arr);
-				return are_you_alive();
+				return true;
 			}
 		}
-		return are_you_alive();
+		return false;
 	}
 	virtual List<List<int>^>^ your_coords() {
         return coordinates;
