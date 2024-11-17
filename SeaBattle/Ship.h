@@ -73,6 +73,24 @@ public:
 
 		addition_number();
 	}
+	void operator=(Ship^ some_ship) {
+		this->length = some_ship->length;
+		this->name = some_ship->name;
+		this->name_size = some_ship->name_size;
+		this->coordinates = gcnew List<List<int>^>();
+		for each (List<int> ^ innerList in some_ship->coordinates) {
+			List<int>^ newList = gcnew List<int>();
+			for each (int value in innerList) {
+				newList->Add(value);
+			}
+			this->coordinates->Add(newList);
+		}
+		this->direction = some_ship->direction;
+		this->identifier = some_ship->identifier;
+
+		addition_number();
+	}
+
 	Char get_Direction() {
 		return direction;
 	}
@@ -98,7 +116,7 @@ public:
 		coordinates = some_coords;
 	}
 	void change_direction() {
-		direction = (direction = 'X') ? 'Y' : 'X';
+		direction = (direction == 'X') ? 'Y' : 'X';
 	}
 	virtual bool operator==(Ship^ comparing_ship) {
 		if (identifier == comparing_ship->get_identifier()) {

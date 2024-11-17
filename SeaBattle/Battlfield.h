@@ -113,6 +113,7 @@ namespace SeaBattle {
 		//+-----------temp data-----------+
 		PictureBox^ buffer_Cell = nullptr;
 		Ship^ choosen_ship = nullptr;
+		Ship^ backUpShip = nullptr;
 		//+-------------------------------+
 
 		void init_SizeOfShips() {
@@ -238,7 +239,10 @@ namespace SeaBattle {
 			this->Name = L"Battlfield";
 			this->Text = L"Battleship Game";
 			this->ResumeLayout(false);
-
+			//
+			//event
+			//
+			this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::MouseWheel_Rotate_Ship);
 		}
 
 #pragma region some initialization
@@ -249,7 +253,7 @@ namespace SeaBattle {
 				this->panelGrid2 = gcnew System::Windows::Forms::Panel();
 				this->panelGrid2->Location = System::Drawing::Point(470, 21);
 				this->panelGrid2->Name = L"panelGrid2";
-				this->panelGrid2->Size = System::Drawing::Size(300, 300);
+				this->panelGrid2->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
 				this->panelGrid2->TabIndex = 1;
 
 				// Add the panel to the form
@@ -326,13 +330,12 @@ namespace SeaBattle {
 					Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
 					for each (Ship ^ some_ship_from_array_for_check in array_for_check)
 					{
-						/*simentic error one and the same coordinate triggered that condition*/ // need to create list of exceptions' coordinates
-						//something wrong with that condition. Just read and check in debag
+
 						if (some_ship_from_array_for_check->is_that_your_coord(x, y) 
 							&& !already_exist_required_point_tuple(required_coords_temp, tag->X, tag->Y) 
 							&& ((tag->X != 0 || tag->Y != 0) || required_coords_temp->Count > 0)) {
 							return true;// i add occupied coordinates.
-							//if in array has at least just one ship with that coords
+
 						}
 					}
 
@@ -693,7 +696,7 @@ namespace SeaBattle {
 
 #pragma region events
 
-#pragma region general functions for reflection of something
+#pragma region general functions for reflection of ships
 		//+-----------------------------------------------------------------+
 		//|using the "choosen_ship" for return it back on to its first place|
 		//+-----------------------------------------------------------------+
@@ -770,7 +773,10 @@ namespace SeaBattle {
 			return answers;
 		}
 
-		void corrections_of_coordinates_for_showed(List<List<int>^>^& list_of_coordinates) {
+		//+---------------------------------------------------------------+
+		//|it doesn't just checking. Even changed it on correct!		  |
+		//+---------------------------------------------------------------+
+		void corrections_of_coordinates_for_showed(List<List<int>^>^% list_of_coordinates) {
 
 			Dictionary<String^, bool>^ info_About_Correctness_Coordinates = coords_already_ready(list_of_coordinates);
 
@@ -807,7 +813,7 @@ namespace SeaBattle {
 		//|painting the changed coords so called "view_coords - global variable".|
 		//|Coords changs when cursor to entered in some cell.					 |
 		//+----------------------------------------------------------------------+
-		void paint_choosen_ship_while(System::Object^ sender, System::EventArgs^ e) {
+		void paint_choosen_ship(System::Object^ sender, System::EventArgs^ e) {
 			try { (!choosen_ship) ? System::Convert::ToString("choosen_ship in function \"paint_choosen_ship_while\" is equal to nullptr") : "nothing"; }
 			catch (String^ errmsg) { return; }
 
@@ -819,6 +825,7 @@ namespace SeaBattle {
 			int y = (choosen_ship->get_Direction() == 'Y') ? choosen_ship->get_Length() : 1;
 			List<List<int>^>^ choosen_ship_coords = choosen_ship->your_coords();
 
+			//default coords for changing from that point
 			bool addDirX = (choosen_ship_coords[0]->default[0] == choosen_ship_coords[choosen_ship->get_Length() - 1]->default[0]) ? false : true;
 			bool addDirY = (choosen_ship_coords[0]->default[1] == choosen_ship_coords[choosen_ship->get_Length() - 1]->default[1]) ? false : true;
 
@@ -834,6 +841,7 @@ namespace SeaBattle {
 				}
 			}
 
+			choosen_ship->change_coordinates(view_coordinates_temp);
 			corrections_of_coordinates_for_showed(view_coordinates_temp);
 
 			for each (List<int> ^ one_dim_arr in view_coordinates_temp) {
@@ -862,18 +870,78 @@ namespace SeaBattle {
 			view_coordinates = view_coordinates_temp;
 		}
 
+		
+
+		void generate_opposite_coords_wheel(int root_x, int root_y) {
+			List<List<int>^>^ view_coordinates_temp = gcnew List<List<int>^>;
+
+			int x = (choosen_ship->get_Direction() == 'X') ? choosen_ship->get_Length() : 1;
+			int y = (choosen_ship->get_Direction() == 'Y') ? choosen_ship->get_Length() : 1;
+			List<List<int>^>^ choosen_ship_coords = choosen_ship->your_coords();
+
+			//default coords for changing from that point. Defined by last coordinates. If it equal so thats is a direction
+			Char addDirXY = choosen_ship->get_Direction();
+
+			for (int i = 0; i < x; i++) {
+				for (int j = 0; j < y; j++) {
+					List<int>^ XY = gcnew List<int>;
+					int X_coord = (addDirXY == 'X') ? root_x + i : root_x;
+					int Y_coord = (addDirXY == 'Y') ? root_y + j : root_y;
+					XY->Add(X_coord);
+					XY->Add(Y_coord);
+
+					view_coordinates_temp->Add(XY);
+				}
+			}
+
+			if (!clear_coordinates(view_coordinates_temp, user_field_ships_array) ){
+				choosen_ship = backUpShip;
+				choosen_ship->change_direction();
+				view_coordinates = backUpShip->your_coords();
+				backUpShip = nullptr;
+				return;
+			}
+
+			view_coordinates = view_coordinates_temp;
+		}
+
 #pragma endregion general functions for reflection of something
+
+		void Battlfield::MouseWheel_Rotate_Ship(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e){
+			if (choosen_ship) {
+				backUpShip = choosen_ship;
+				//wheel down 
+				//for (int i = 0; i < view_coordinates->Count; i++) {
+				//	//i have wanted to swap X with Y
+				// i'll delete that in a next commit;
+				//	int buffer{ view_coordinates[i]->default[0] };
+				//	view_coordinates[i]->default[0] = view_coordinates[i]->default[1];
+				//	view_coordinates[i]->default[1] = buffer;
+				//}
+				
+				// [0:2] [0:3] [0:4]
+				choosen_ship->change_direction();
+
+				//corrections_of_coordinates_for_showed(view_coordinates);
+				generate_opposite_coords_wheel(view_coordinates[0]->default[0], view_coordinates[0]->default[1]); // changed view_coords because it's a global variable
+
+				choosen_ship->change_coordinates(view_coordinates); // because in generate_opposite (and maybe others func) using that coords like main coords of ship
+				to_tidy_panel_void_ships_mark(MainFieldUser1, user_field_ships_array);
+
+				Mark_the_ship(choosen_ship, MainFieldUser1);
+			}
+		}
 
 		void MouseEnter_Cell(System::Object^ sender, System::EventArgs^ e) {
 			if (dragging) {
 				to_tidy_panel_void_ships_mark(MainFieldUser1, user_field_ships_array);
 
-				paint_choosen_ship_while(sender, e);
+				paint_choosen_ship(sender, e);
 			}
 			else if (!dragging && choosen_ship) {
 				to_tidy_panel_void_ships_mark(MainFieldUser1, user_field_ships_array);
 
-				paint_choosen_ship_while(sender, e);
+				paint_choosen_ship(sender, e);
 			}
 		}
 		void Battlfield::OnCellMouseClick(Object^ sender, MouseEventArgs^ e){
@@ -895,7 +963,7 @@ namespace SeaBattle {
 							Point^ clickedCellTag = safe_cast<Point^>(clickedCell->Tag);
 
 							Point^ cellTag = safe_cast<Point^>(buffer_Cell->Tag);
-							Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell(cellTag->X, cellTag->Y, template_ships_array);
+							Ship^ some_ship = choosen_ship;
 
 							if (clear_coordinates(view_coordinates, user_field_ships_array) == false) {
 								MessageBox::Show("the ship not on the right coordinates.");
@@ -903,7 +971,6 @@ namespace SeaBattle {
 							}
 
 							some_ship->change_coordinates(view_coordinates);
-							view_coordinates = nullptr;
 
 							Mark_the_ship(some_ship, MainFieldUser1);
 							
