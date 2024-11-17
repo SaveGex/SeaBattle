@@ -22,14 +22,18 @@ protected:
 	//|first is x, second is y|
 	//+-----------------------+
 	List<List<int>^>^ coordinates;
+	List<List<int>^>^ hitted_coords;
 	//+-----------------------------------------------+
 	//|dir = 0 means directory isn't initialized	  |
 	//|dir = X means the ship is set along the X-axis.|
 	//|dir = Y Y-axis.								  |
 	//+-----------------------------------------------+
 	Char direction;
-	//+-------------------+
+	//+--------------------------------------------------------------+
+	//|generating for help of name + number(number of existing ships)|
+	//+--------------------------------------------------------------+
 	String^ identifier{};
+	bool alive{};
 
 	static void addition_number() {
 		number++;
@@ -62,34 +66,36 @@ protected:
 		return answer;
 
 	}
-	virtual ~Ship() {
-
-	}
+	virtual ~Ship() {/* nothing */ }
 public:
 	Ship(List<List<int>^>^ coords_X_Y, int length, String^ name) : length{ length }, name{ name }, coordinates{ coords_X_Y } {
 		direction = definition_of_axiss();
 		name_size = name->Length;
 		identifier = name + System::Convert::ToString(number);
+		hitted_coords = gcnew List<List<int>^>();
 
 		addition_number();
+		are_you_alive();
 	}
-	void operator=(Ship^ some_ship) {
-		this->length = some_ship->length;
-		this->name = some_ship->name;
-		this->name_size = some_ship->name_size;
+	Ship::Ship(Ship^ other) {
+		this->length = other->length;
+		this->name = other->name;
+		this->name_size = other->name_size;
+
 		this->coordinates = gcnew List<List<int>^>();
-		for each (List<int> ^ innerList in some_ship->coordinates) {
-			List<int>^ newList = gcnew List<int>();
-			for each (int value in innerList) {
-				newList->Add(value);
-			}
-			this->coordinates->Add(newList);
+		for each (List<int> ^ innerList in other->coordinates) {
+			this->coordinates->Add(gcnew List<int>(innerList));
 		}
-		this->direction = some_ship->direction;
-		this->identifier = some_ship->identifier;
+		hitted_coords = gcnew List<List<int>^>();
 
+
+		this->direction = other->direction;
+		this->identifier = other->identifier;
 		addition_number();
+		are_you_alive();
 	}
+
+	virtual Ship^ Clone() abstract;
 
 	Char get_Direction() {
 		return direction;
@@ -103,9 +109,22 @@ public:
 	String^ get_identifier() {
 		return identifier;
 	}
+	List<List<int>^>^ your_hitted_coords() {
+		return hitted_coords;
+	}
+	bool are_you_alive() {
+		if (hitted_coords->Count == coordinates->Count) {
+			alive = true;
+			return true;
+		}
+		alive = false;
+		return false;
+	}
+
+
 	// and there check array of coordinates the ship for return "true" if coordinates is equal or false if coords isn't equal
 	virtual bool is_that_your_coord(int X, int Y) {
-		for each (List<int>^ X_and_Y in coordinates) {
+		for each (List<int> ^ X_and_Y in coordinates) {
 			if (X_and_Y[0] == X && X_and_Y[1] == Y) {
 				return true;
 			}
@@ -128,8 +147,20 @@ public:
 	//virtual void operator=(Ship Robj) = 0;
 	// i want to do parent class where was that variables and info about him hits. 
 	// if he still alive i should can find out about it
-	virtual bool was_hitted(int X, int Y) abstract;
-	virtual List<List<int>^>^ your_coords() abstract;
-	virtual String^ get_Name() abstract;
+	virtual bool was_hitted(int X, int Y) {
+		for each (List<int> ^ one_dim_arr in coordinates) {
+			if (one_dim_arr[0] == X && one_dim_arr[1] == Y) {
+				hitted_coords->Add(one_dim_arr);
+				return are_you_alive();
+			}
+		}
+		return are_you_alive();
+	}
+	virtual List<List<int>^>^ your_coords() {
+        return coordinates;
+	}
+	virtual String^ get_Name() {
+		return name;
+	}
 };
 
