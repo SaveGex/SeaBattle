@@ -97,6 +97,12 @@ public:
 
 	virtual Ship^ Clone() abstract;
 
+	List<List<int>^>^ your_hitted_coords() {
+		return hitted_coords;
+	}
+	String^ get_identifier() {
+		return identifier;
+	}
 	Char get_Direction() {
 		return direction;
 	}
@@ -106,19 +112,20 @@ public:
 	int get_Length() {
 		return length;
 	}
-	String^ get_identifier() {
-		return identifier;
-	}
-	List<List<int>^>^ your_hitted_coords() {
-		return hitted_coords;
-	}
 	bool are_you_alive() {
-		if (hitted_coords->Count == coordinates->Count) {
-			alive = true;
-			return true;
+		int exact_coords{};
+
+		for each (List<int>^ one_dim_hit_arr in hitted_coords) {
+			if (is_that_your_coord(one_dim_hit_arr[0], one_dim_hit_arr[1]) ) {
+				exact_coords++;
+			}
 		}
-		alive = false;
-		return false;
+		if (exact_coords == length) {
+			alive = false;
+			return false;
+		}
+		alive = true;
+		return true;
 	}
 
 
@@ -148,12 +155,16 @@ public:
 	// i want to do parent class where was that variables and info about him hits. 
 	// if he still alive i should can find out about it
 	virtual bool was_hitted(int X, int Y) {
-		for each (List<int> ^ one_dim_arr in coordinates) {
-			if (one_dim_arr[0] == X && one_dim_arr[1] == Y) {
-				hitted_coords->Add(one_dim_arr);
-				return true;
-			}
+		if (is_that_your_coord(X, Y)) {
+			List<int>^ buf = gcnew List<int>;
+
+			buf->Add(X);
+			buf->Add(Y);
+
+			hitted_coords->Add(buf);
+			return true;
 		}
+		
 		return false;
 	}
 	virtual List<List<int>^>^ your_coords() {

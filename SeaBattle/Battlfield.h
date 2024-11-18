@@ -31,16 +31,16 @@ namespace SeaBattle {
 	/// <summary>
 	/// Summary for Battlfield
 	/// </summary>
-	public ref class Battlfield : public System::Windows::Forms::Form{
+	public ref class Battlfield : public System::Windows::Forms::Form {
 
-	enum class GameStage {
+		enum class GameStage {
 			Setup,
 			Placement,
 			Battle,
 			GameOver
 		};
 	public:
-		Battlfield(void){
+		Battlfield(void) {
 			init_SizeOfShips();
 			init_countOfShips();
 			init_colors();
@@ -64,15 +64,16 @@ namespace SeaBattle {
 	private:
 		GameStage currentStage = GameStage::Setup;
 
-		List < Ship^ >^ first_ships_array = gcnew List < Ship ^ >();
+		List < Ship^ >^ first_ships_array = gcnew List < Ship^ >();
 
 		//+---------------temp data----------------+
 		//+----might be deleted after placement----+
-		List < List < int > ^ > ^ buffer_coords = gcnew List < List < int > ^ >(); 
-		List < List < int > ^ > ^ view_coordinates = gcnew List < List < int > ^ >();
+		List < List < int >^ >^ buffer_coords = gcnew List < List < int >^ >();
+		List < List < int >^ >^ view_coordinates = gcnew List < List < int >^ >();
 		List < List < int >^ >^ Bot_already_have_fired_there = gcnew List < List < int >^ >();
-		List < Tuple < int, int > ^ > ^ required_coordinates = gcnew List<Tuple < int, int >^ >();
-		List < Ship ^ > ^ second_ships_array = gcnew List < Ship ^ > ();
+		List < List < int >^ >^ User_already_have_fired_there = gcnew List < List < int >^ >();
+		List < Tuple < int, int >^ >^ required_coordinates = gcnew List<Tuple < int, int >^ >();
+		List < Ship^ >^ second_ships_array = gcnew List < Ship^ >();
 		//+----------------------------------------+
 
 
@@ -83,9 +84,9 @@ namespace SeaBattle {
 		//|3 ships - a row of 2 cells(“destroyers” or “two - deck”)		|
 		//|4 ships - 1 cell(“submarines” or “single deck”)				|
 		//+-------------------------------------------------------------+
-		Dictionary < String^, int> ^ sizeOfShips = gcnew Dictionary<String^, int> ();
+		Dictionary < String^, int>^ sizeOfShips = gcnew Dictionary<String^, int>();
 
-		Dictionary < String^, int> ^ countOfShips = gcnew Dictionary<String^, int> ();
+		Dictionary < String^, int>^ countOfShips = gcnew Dictionary<String^, int>();
 
 		Dictionary < String^, System::Drawing::Color>^ colors = gcnew Dictionary<String^, System::Drawing::Color>();
 
@@ -107,19 +108,19 @@ namespace SeaBattle {
 		String^ SB = "submarines";
 
 		//+---size of field----+
-		   const int rows = 10;
-		   const int cols = 10;
+		const int rows = 10;
+		const int cols = 10;
 		//+---size of field----+
 
 
 		//+-----move cursor------+
-		   bool dragging = false;
+		bool dragging = false;
 		//+----------------------+
-		
+
 		//+-----------------------------------Field datas--------------------------------+
-		int simp_margin = 1;
-		int sizeFieldY = 300 + (simp_margin * 10), sizeFieldX = 300 + (simp_margin * 10);
-		int corrections = simp_margin * 10;
+		//int simp_margin = 1;
+		//int sizeFieldY = 300 + (simp_margin * 10), sizeFieldX = 300 + (simp_margin * 10);
+		//int corrections = simp_margin * 10;
 		//+------------------------------------------------------------------------------+
 
 		//+-----------temp data-----------+
@@ -128,7 +129,19 @@ namespace SeaBattle {
 		Ship^ choosen_ship = nullptr; // used for many functions like current choosen_ship.
 		Ship^ backUpShip = nullptr; // used for back up ship of drawing if itself coords isn't correct.
 		Ship^ backUpShip_Template = nullptr; //used for back up ship if i choose some ship and didn't set it
+		int bot_ships_deth{};
+		int users_ships_death{};
 		int count_seed = 1;
+		//+-------------------------------+
+
+		//+-----------Blinking------------+
+		System::Windows::Forms::Timer^ blinkTimer;
+		PictureBox^ blinkingCell;
+		Color blinkColor1 = Color::White;
+		Color blinkColor2 = Color::Red;
+		Color originalColor = Color::LightGray;
+		bool toggle;
+		bool blinking{ false };
 		//+-------------------------------+
 
 		void init_SizeOfShips() {
@@ -150,10 +163,10 @@ namespace SeaBattle {
 			colors->Add(SB, System::Drawing::Color::DarkViolet);
 		}
 		void init_black_colors() {
-			black_colors->Add(BS, System::Drawing::Color::DimGray);       
-			black_colors->Add(CR, System::Drawing::Color::DarkRed);       
-			black_colors->Add(DS, System::Drawing::Color::SaddleBrown);   
-			black_colors->Add(SB, System::Drawing::Color::Indigo);        
+			black_colors->Add(BS, System::Drawing::Color::DimGray);
+			black_colors->Add(CR, System::Drawing::Color::DarkRed);
+			black_colors->Add(DS, System::Drawing::Color::SaddleBrown);
+			black_colors->Add(SB, System::Drawing::Color::Indigo);
 		}
 		void init_hit_colors() {
 			hit_colors->Add(BS, System::Drawing::Color::Red);         // Для Battleship (Темно-сірий -> Червоний)
@@ -165,7 +178,7 @@ namespace SeaBattle {
 
 
 	private: System::Windows::Forms::Panel^ panel1;
-		   
+
 
 	private: System::Void MainForm_Load(System::Object^ sender, System::EventArgs^ e) {
 		InitializeGameStage();
@@ -189,7 +202,7 @@ namespace SeaBattle {
 		/// Required designer variable.
 		/// </summary>
 
-        System::Windows::Forms::Panel^ MainFieldUser1;
+		System::Windows::Forms::Panel^ MainFieldUser1;
 		//+------------------------TemplateShipsField--------------------------------+
 		//|that panel "TemplateShipsField" for placement the ships in tempalte field.|
 		//|it's layout for placement . There is sample how it looks.				 |
@@ -203,379 +216,423 @@ namespace SeaBattle {
 		//+-----------------------------------------+
 	private: System::Windows::Forms::Button^ ready_button;
 	private: System::Windows::Forms::Button^ randomize_button;
+	private: System::Windows::Forms::Label^ Main_User_Info_Label;
+	private: System::Windows::Forms::Label^ Bot_Info_Label;
 
 
-		System::ComponentModel::Container^ components;
+		   System::ComponentModel::Container^ components;
 
 #pragma region Windows Form Designer generated code
 
-		/// <summary>
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
-        void InitializeComponent(void)
-        {
-			this->MainFieldUser1 = (gcnew System::Windows::Forms::Panel());
-			this->Bot_Panel_Grid = (gcnew System::Windows::Forms::Panel());
-			this->TemplateShipsField = (gcnew System::Windows::Forms::Panel());
-			this->ready_button = (gcnew System::Windows::Forms::Button());
-			this->randomize_button = (gcnew System::Windows::Forms::Button());
-			this->StartPosition = FormStartPosition::CenterScreen;
-			this->SuspendLayout();
-			// Severity	Code	Description	Project	File	Line	Suppression State	Details
+		   /// <summary>
+		   /// Required method for Designer support - do not modify
+		   /// the contents of this method with the code editor.
+		   /// </summary>
+		   void InitializeComponent(void)
+		   {
+			   this->MainFieldUser1 = (gcnew System::Windows::Forms::Panel());
+			   this->Bot_Panel_Grid = (gcnew System::Windows::Forms::Panel());
+			   this->TemplateShipsField = (gcnew System::Windows::Forms::Panel());
+			   this->ready_button = (gcnew System::Windows::Forms::Button());
+			   this->randomize_button = (gcnew System::Windows::Forms::Button());
+			   this->Main_User_Info_Label = (gcnew System::Windows::Forms::Label());
+			   this->Bot_Info_Label = (gcnew System::Windows::Forms::Label());
+			   this->SuspendLayout();
+			   // 
+			   // MainFieldUser1
+			   // 
+			   this->MainFieldUser1->Location = System::Drawing::Point(12, 21);
+			   this->MainFieldUser1->Name = L"MainFieldUser1";
+			   this->MainFieldUser1->Size = System::Drawing::Size(300 + (1 * 10), 300 + (1 * 10));
+			   this->MainFieldUser1->TabIndex = 0;
+			   //// 
+			   //// Bot_Panel_Grid
+			   //// 
+			   //this->Bot_Panel_Grid->Location = System::Drawing::Point(0, 0);
+			   //this->Bot_Panel_Grid->Name = L"Bot_Panel_Grid";
+			   //this->Bot_Panel_Grid->Size = System::Drawing::Size(300, 300);
+			   //this->Bot_Panel_Grid->TabIndex = 0;
+			   // 
+			   // TemplateShipsField
+			   // 
+			   this->TemplateShipsField->Location = System::Drawing::Point(0, 0);
+			   this->TemplateShipsField->Name = L"TemplateShipsField";
+			   this->TemplateShipsField->Size = System::Drawing::Size(300, 300);
+			   this->TemplateShipsField->TabIndex = 0;
+			   // 
+			   // ready_button
+			   // 
+			   this->ready_button->Location = System::Drawing::Point(358, 363);
+			   this->ready_button->Name = L"ready_button";
+			   this->ready_button->Size = System::Drawing::Size(75, 23);
+			   this->ready_button->TabIndex = 1;
+			   this->ready_button->Text = L"Ready";
+			   this->ready_button->UseVisualStyleBackColor = true;
+			   this->ready_button->Click += gcnew System::EventHandler(this, &Battlfield::button1_Click);
+			   // 
+			   // randomize_button
+			   // 
+			   this->randomize_button->Location = System::Drawing::Point(125 + (1 * 10), 325 + (1 * 10));
+			   this->randomize_button->Name = L"randomize_button";
+			   this->randomize_button->Size = System::Drawing::Size(75, 23);
+			   this->randomize_button->TabIndex = 1;
+			   this->randomize_button->Text = L"Randomize";
+			   this->randomize_button->UseVisualStyleBackColor = true;
+			   this->randomize_button->Hide();
+			   this->randomize_button->Click += gcnew System::EventHandler(this, &Battlfield::Randomize_User_Field_Ships);
+			   // 
+			   // Main_User_Info_Label
+			   // 
+			   this->Main_User_Info_Label->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 14, System::Drawing::FontStyle::Italic));
+			   this->Main_User_Info_Label->Location = System::Drawing::Point(100, 0);
+			   this->Main_User_Info_Label->Name = L"Main_User_Info_Label";
+			   this->Main_User_Info_Label->Size = System::Drawing::Size(100, 20);
+			   this->Main_User_Info_Label->TabIndex = 0;
+			   this->Main_User_Info_Label->Text = L"User ships";
+			   // 
+			   // Bot_Info_Label
+			   // 
+			   this->Bot_Info_Label->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 14, System::Drawing::FontStyle::Italic));
+			   this->Bot_Info_Label->Location = System::Drawing::Point((792 - 200), 0);
+			   this->Bot_Info_Label->Name = L"Bot_Info_Label";
+			   this->Bot_Info_Label->Size = System::Drawing::Size(100, 20);
+			   this->Bot_Info_Label->TabIndex = 0;
+			   this->Bot_Info_Label->Text = L"Bot ships";
+			   // 
+			   // Battlfield
+			   // 
+			   this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
+			   this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+			   this->BackColor = System::Drawing::SystemColors::ActiveCaption;
+			   this->ClientSize = System::Drawing::Size(792, 398);
+			   this->Controls->Add(this->Bot_Info_Label);
+			   this->Controls->Add(this->Main_User_Info_Label);
+			   this->Controls->Add(this->ready_button);
+			   this->Controls->Add(this->randomize_button);
+			   this->Controls->Add(this->MainFieldUser1);
+			   this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+			   this->MaximizeBox = false;
+			   this->Name = L"Battlfield";
+			   this->RightToLeft = System::Windows::Forms::RightToLeft::No;
+			   this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
+			   this->Text = L"Battleship Game";
+			   this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::MouseWheel_Rotate_Ship);
+			   this->ResumeLayout(false);
 
-			// MainFieldUser1
-			// 
-			this->MainFieldUser1->Location = System::Drawing::Point(12, 21);
-			this->MainFieldUser1->Name = L"MainFieldUser1";
-			this->MainFieldUser1->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
-			this->MainFieldUser1->TabIndex = 0;
-			// 
-			// Bot_Panel_Grid
-			// 
-			this->Bot_Panel_Grid->Location = System::Drawing::Point(0, 0);
-			this->Bot_Panel_Grid->Name = L"panelGrid2";
-			this->Bot_Panel_Grid->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
-			this->Bot_Panel_Grid->TabIndex = 0;
-			// 
-			// TemplateShipsField
-			// 
-			this->TemplateShipsField->Location = System::Drawing::Point(0, 0);
-			this->TemplateShipsField->Name = L"ShipsField";
-			this->TemplateShipsField->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
-			this->TemplateShipsField->TabIndex = 0;
-			// 
-			// ready_button
-			// 
-			this->ready_button->Location = System::Drawing::Point(358 + corrections, 363 + corrections);
-			this->ready_button->Name = L"ready_button";
-			this->ready_button->Size = System::Drawing::Size(75, 23);
-			this->ready_button->TabIndex = 1;
-			this->ready_button->Text = L"Ready";
-			this->ready_button->UseVisualStyleBackColor = true;
-			this->ready_button->Click += gcnew System::EventHandler(this, &Battlfield::button1_Click);
-			// 
-			// randomize_button
-			// 
-			this->randomize_button->Location = System::Drawing::Point((sizeFieldX / 2) - corrections * 2, sizeFieldY + corrections * 2);
-			this->randomize_button->Name = L"randomize_button";
-			this->randomize_button->Size = System::Drawing::Size(75, 23);
-			this->randomize_button->TabIndex = 1;
-			this->randomize_button->Text = L"Randomize";
-			this->randomize_button->UseVisualStyleBackColor = true;
-			this->randomize_button->Hide();
-			this->randomize_button->Click += gcnew System::EventHandler(this, &Battlfield::Randomize_User_Field_Ships);
-			// 
-			// Battlfield
-			// 
-			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
-			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->BackColor = System::Drawing::SystemColors::ActiveCaption;
-			this->ClientSize = System::Drawing::Size(792 + corrections, 398 + corrections);
-			this->Controls->Add(this->ready_button);
-			this->Controls->Add(this->randomize_button);
-			this->Controls->Add(this->MainFieldUser1);
-			this->Name = L"Battlfield";
-			this->Text = L"Battleship Game";
-			this->ResumeLayout(false);
-			//
-			//event
-			//
-			this->MouseWheel += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::MouseWheel_Rotate_Ship);
-		}
+		   }
 
 #pragma region some initialization
 
-		void InitializeGameStage()
-		{
-			if (currentStage == GameStage::Battle) {
-				this->Bot_Panel_Grid = gcnew System::Windows::Forms::Panel();
-				this->Bot_Panel_Grid->Location = System::Drawing::Point(470, 21);
-				this->Bot_Panel_Grid->Name = L"panelGrid2";
-				this->Bot_Panel_Grid->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
-				this->Bot_Panel_Grid->TabIndex = 1;
+		   void InitializeGameStage()
+		   {
+			   if (currentStage == GameStage::Battle) {
+				   this->Bot_Panel_Grid = gcnew System::Windows::Forms::Panel();
+				   this->Bot_Panel_Grid->Location = System::Drawing::Point(470, 21);
+				   this->Bot_Panel_Grid->Name = L"Bot_Panel_Grid";
+				   this->Bot_Panel_Grid->Size = System::Drawing::Size(300 + (1 * 10), 300 + (1 * 10));
+				   this->Bot_Panel_Grid->TabIndex = 1;
 
-				// Add the panel to the form
-				this->Controls->Add(this->Bot_Panel_Grid);
+				   // Add the panel to the form
+				   this->Controls->Add(this->Bot_Panel_Grid);
 
-				CreateGrid(10, 10, Bot_Panel_Grid);
-			}
-		}
-		void InitializeShips() 
-		{
-			if (currentStage == GameStage::Placement) {
-				this->TemplateShipsField = gcnew System::Windows::Forms::Panel();
-				this->TemplateShipsField->Location = System::Drawing::Point(470, 21);
-				this->TemplateShipsField->Name = L"Ship";
-				this->TemplateShipsField->Size = System::Drawing::Size(sizeFieldX, sizeFieldY);
-				this->TemplateShipsField->TabIndex = 1;
+				   CreateGrid(10, 10, Bot_Panel_Grid);
+			   }
+		   }
+		   void InitializeShips()
+		   {
+			   if (currentStage == GameStage::Placement) {
+				   this->TemplateShipsField = gcnew System::Windows::Forms::Panel();
+				   this->TemplateShipsField->Location = System::Drawing::Point(470, 21);
+				   this->TemplateShipsField->Name = L"Ship";
+				   this->TemplateShipsField->Size = System::Drawing::Size(300 + (1 * 10), 300 + (1 * 10));
+				   this->TemplateShipsField->TabIndex = 1;
 
-				// Add the panel to the form
-				this->Controls->Add(this->TemplateShipsField);
+				   // Add the panel to the form
+				   this->Controls->Add(this->TemplateShipsField);
 
-				CreateGrid(10, 10, TemplateShipsField);
-			}
-		}
-        // function which create some grid
-        void CreateGrid(int rows, int cols, Panel^ panel)
-        {
-            for (int i = 0; i < rows; ++i)
-            {
-                for (int j = 0; j < cols; ++j)
-                {
-                    PictureBox^ cell = gcnew PictureBox();
-                    cell->Size = System::Drawing::Size(30, 30);
-                    cell->BorderStyle = System::Windows::Forms::BorderStyle::None;
-					int x = j * (simp_margin + 30), y = i * (simp_margin + 30);
-                    cell->Location = System::Drawing::Point(x, y);
-                    cell->BackColor = System::Drawing::Color::LightBlue;
-                    cell->Tag = gcnew System::Drawing::Point(i, j);
-					cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
-					if (panel == MainFieldUser1) {
-						cell->MouseEnter += gcnew System::EventHandler(this, &Battlfield::MouseEnter_Cell);
-					}
+				   CreateGrid(10, 10, TemplateShipsField);
+			   }
+		   }
+		   // function which create some grid
+		   void CreateGrid(int rows, int cols, Panel^ panel)
+		   {
+			   for (int i = 0; i < rows; ++i)
+			   {
+				   for (int j = 0; j < cols; ++j)
+				   {
+					   PictureBox^ cell = gcnew PictureBox();
+					   cell->Size = System::Drawing::Size(30, 30);
+					   cell->BorderStyle = System::Windows::Forms::BorderStyle::None;
+					   int x = j * (1 + 30), y = i * (1 + 30);
+					   cell->Location = System::Drawing::Point(x, y);
+					   cell->BackColor = System::Drawing::Color::LightBlue;
+					   cell->Tag = gcnew System::Drawing::Point(i, j);
+					   cell->MouseClick += gcnew System::Windows::Forms::MouseEventHandler(this, &Battlfield::OnCellMouseClick);
+					   if (panel == MainFieldUser1) {
+						   cell->MouseEnter += gcnew System::EventHandler(this, &Battlfield::MouseEnter_Cell);
+					   }
 
-                    panel->Controls->Add(cell); // add the cell on the panel
-                }
-            }
-        }
+					   panel->Controls->Add(cell); // add the cell on the panel
+				   }
+			   }
+		   }
 #pragma endregion
 
 #pragma region create random ships
 
-		//+--------------------------------------------------------------------------+
-		//|in this code that function using for initialize coordinates random ships. |
-		//|and somehow ships randomize always in the same direction... idk why.		 |
-		//|Maybe direction related with something									 |
-		//+--------------------------------------------------------------------------+
-		bool clear_coordinates(List<List<int>^>^ new_coords, List<Ship^>^ array_of_ships_for_check_out) {
+		   //+--------------------------------------------------------------------------+
+		   //|in this code that function using for initialize coordinates random ships. |
+		   //|and somehow ships randomize always in the same direction... idk why.		 |
+		   //|Maybe direction related with something									 |
+		   //+--------------------------------------------------------------------------+
+		   bool clear_coordinates(List<List<int>^>^ new_coords, List<Ship^>^ array_of_ships_for_check_out) {
 
-			//first of all i'll check whether goes beyond the ship. By using the coordinates
-			for (int i = 0; i < new_coords->Count; i++) {
-				//X still always first.
-				if ((new_coords[i]->default[0] > 9 || new_coords[i]->default[0] < 0) || (new_coords[i]->default[1] < 0 || new_coords[i]->default[1] > 9)) {
-					return false;
-				}
-			}
-			// and the second it's general if
-			if (array_of_ships_for_check_out->Count > 0) {
+			   //first of all i'll check whether goes beyond the ship. By using the coordinates
+			   for (int i = 0; i < new_coords->Count; i++) {
+				   //X still always first.
+				   if ((new_coords[i]->default[0] > 9 || new_coords[i]->default[0] < 0) || (new_coords[i]->default[1] < 0 || new_coords[i]->default[1] > 9)) {
+					   return false;
+				   }
+			   }
+			   // and the second it's general if
+			   if (array_of_ships_for_check_out->Count > 0) {
 
-				for each(Ship^ some_ship in array_of_ships_for_check_out) { //need to run through by the ships array for getting the coords and... Check the condition
+				   for each (Ship ^ some_ship in array_of_ships_for_check_out) { //need to run through by the ships array for getting the coords and... Check the condition
 
-					for (int k = 0; k < new_coords->Count; k++) { // that cycle are exists for don't leave of the limits of list
+					   for (int k = 0; k < new_coords->Count; k++) { // that cycle are exists for don't leave of the limits of list
 
-						if (some_ship->is_that_your_coord(new_coords[k]->default[0], new_coords[k]->default[1])) {
-							return false;
-						}
-					}
-				}
+						   if (some_ship->is_that_your_coord(new_coords[k]->default[0], new_coords[k]->default[1])) {
+							   return false;
+						   }
+					   }
+				   }
 
-			}
+			   }
 
-			return true;
-		}
+			   return true;
+		   }
 
-		List<List<int>^>^ randomize_coordinates(int length, List<Ship^>^ list_of_pinned_ships) {
-			static std::mt19937 rng2(std::chrono::steady_clock::now().time_since_epoch().count());
-
-			
-
-			List<List<int>^>^ rand_coords = nullptr;
-			bool okPosition = false; /*while rand_coords don't to follow the ruls! kurwa*/
+		   List<List<int>^>^ randomize_coordinates(int length, List<Ship^>^ list_of_pinned_ships) {
+			   static std::mt19937 rng2(std::chrono::steady_clock::now().time_since_epoch().count());
 
 
-			while (okPosition == false) {
-				std::uniform_int_distribution<int> dist(1, 2);
-				std::uniform_int_distribution<int> dist2(0, 9);
+
+			   List<List<int>^>^ rand_coords = nullptr;
+			   bool okPosition = false; /*while rand_coords don't to follow the ruls! kurwa*/
 
 
-				bool XY = (dist(rng2) == 1) ? true : false;/*"true" define ONLY value X, false means ONLY the Y define what will be changed. Means on the axis X or Y*/
-				bool Y_Direction = (dist(rng2) == 1) ? true : false;/*"true" define direction will be changed only by the "top", false opposite that is to the "down"*/
-				bool X_Direction = (dist(rng2) == 1) ? true : false;/*"true" define direction will be changed only by the "rigth", false opposite that is to the "left"*/
-				int root_x = dist2(rng2);/*randomly determines coordinates on the begin the function*/
-				int root_y = dist2(rng2);/*randomly determines coordinates on the begin the function*/
+			   while (okPosition == false) {
+				   std::uniform_int_distribution<int> dist(1, 2);
+				   std::uniform_int_distribution<int> dist2(0, 9);
 
-				List<List<int>^>^ buffer = gcnew List<List<int>^>();
-				for (int i = 0; i < length; i++) {
-					List<int>^ innerList = gcnew List<int>();
-					buffer->Add(innerList);
-					if (XY) {
-						root_x += (X_Direction == true) ? 1 : -1;
-					}
-					else {
-						root_y += (Y_Direction == true) ? 1 : -1;
-					}
 
-					buffer[i]->Add(root_x);
-					buffer[i]->Add(root_y);
-					if (root_x < 0 || root_x > 9 || root_y < 0 || root_y > 9) {
-						break; // Або відразу перезапустіть генерацію координат
-					}
+				   bool XY = (dist(rng2) == 1) ? true : false;/*"true" define ONLY value X, false means ONLY the Y define what will be changed. Means on the axis X or Y*/
+				   bool Y_Direction = (dist(rng2) == 1) ? true : false;/*"true" define direction will be changed only by the "top", false opposite that is to the "down"*/
+				   bool X_Direction = (dist(rng2) == 1) ? true : false;/*"true" define direction will be changed only by the "rigth", false opposite that is to the "left"*/
+				   int root_x = dist2(rng2);/*randomly determines coordinates on the begin the function*/
+				   int root_y = dist2(rng2);/*randomly determines coordinates on the begin the function*/
 
-				}
-				if (clear_coordinates(buffer, list_of_pinned_ships)) {
-					okPosition = true;
-					rand_coords = buffer;
-				}
-			}
-			return rand_coords;
-		}
+				   List<List<int>^>^ buffer = gcnew List<List<int>^>();
+				   for (int i = 0; i < length; i++) {
+					   List<int>^ innerList = gcnew List<int>();
+					   buffer->Add(innerList);
+					   if (XY) {
+						   root_x += (X_Direction == true) ? 1 : -1;
+					   }
+					   else {
+						   root_y += (Y_Direction == true) ? 1 : -1;
+					   }
 
-		void SetTag(PictureBox^ cell, int x, int y) {
-			Tuple<int, int>^ coordinates = Tuple::Create(x, y);
-			cell->Tag = coordinates;
-		}
+					   buffer[i]->Add(root_x);
+					   buffer[i]->Add(root_y);
+					   if (root_x < 0 || root_x > 9 || root_y < 0 || root_y > 9) {
+						   break; // Або відразу перезапустіть генерацію координат
+					   }
 
-		//+--------------------------------------------------------------+
-		//|filling the "array_for_fill_a_ships" of random generats ships |
-		//+--------------------------------------------------------------+
-		void CreateFieldShips(List<Ship^>^% array_for_fill_a_ships, System::Windows::Forms::Panel^ panel_for_drawing_ships) {
+				   }
+				   if (clear_coordinates(buffer, list_of_pinned_ships)) {
+					   okPosition = true;
+					   rand_coords = buffer;
+				   }
+			   }
+			   return rand_coords;
+		   }
 
-			for each (KeyValuePair<String^, int> kvp in countOfShips) {
+		   
+		   //+--------------------------------------------------------------+
+		   //|filling the "array_for_fill_a_ships" of random generats ships |
+		   //+--------------------------------------------------------------+
+		   void CreateFieldShips(List<Ship^>^% array_for_fill_a_ships, System::Windows::Forms::Panel^ panel_for_drawing_ships) {
 
-				String^ key = kvp.Key;
-				int value = kvp.Value;
+			   for each (KeyValuePair<String^, int> kvp in countOfShips) {
 
-				for (int i = 0; i < value; i++) {
-					List<List<int>^>^ buf = randomize_coordinates(sizeOfShips[key], array_for_fill_a_ships);
+				   String^ key = kvp.Key;
+				   int value = kvp.Value;
 
-					if (key == BS) {
+				   for (int i = 0; i < value; i++) {
+					   List<List<int>^>^ buf = randomize_coordinates(sizeOfShips[key], array_for_fill_a_ships);
 
-						Ship^ ship = gcnew Battleship(buf, sizeOfShips[BS], BS);
-						
-						array_for_fill_a_ships->Add(ship);
-						Mark_the_ship(ship, panel_for_drawing_ships);
-					}
-					else if (key == CR) {
+					   if (key == BS) {
 
-						Ship^ ship = gcnew Cruisers(buf, sizeOfShips[CR], CR);
-						array_for_fill_a_ships->Add(ship);
-						Mark_the_ship(ship, panel_for_drawing_ships);
-					}
-					else if (key == DS) {
+						   Ship^ ship = gcnew Battleship(buf, sizeOfShips[BS], BS);
 
-						Ship^ ship = gcnew Destroyers(buf, sizeOfShips[DS], DS);
-						array_for_fill_a_ships->Add(ship);
-						Mark_the_ship(ship, panel_for_drawing_ships);
-					}
-					else if (key == SB) {
+						   array_for_fill_a_ships->Add(ship);
+						   Mark_the_ship(ship, panel_for_drawing_ships);
+					   }
+					   else if (key == CR) {
 
-						Ship^ ship = gcnew Submarines(buf, sizeOfShips[SB], SB);
-						array_for_fill_a_ships->Add(ship);
-						Mark_the_ship(ship, panel_for_drawing_ships);
-					}
-				}
-				// Do something with key and value
+						   Ship^ ship = gcnew Cruisers(buf, sizeOfShips[CR], CR);
+						   array_for_fill_a_ships->Add(ship);
+						   Mark_the_ship(ship, panel_for_drawing_ships);
+					   }
+					   else if (key == DS) {
 
-			}
-		}
+						   Ship^ ship = gcnew Destroyers(buf, sizeOfShips[DS], DS);
+						   array_for_fill_a_ships->Add(ship);
+						   Mark_the_ship(ship, panel_for_drawing_ships);
+					   }
+					   else if (key == SB) {
 
-		void Randomize_User_Field_Ships(System::Object^ sender, System::EventArgs^ e) {
+						   Ship^ ship = gcnew Submarines(buf, sizeOfShips[SB], SB);
+						   array_for_fill_a_ships->Add(ship);
+						   Mark_the_ship(ship, panel_for_drawing_ships);
+					   }
+				   }
+				   // Do something with key and value
 
-			first_ships_array->Clear();
-			TemplateShipsField->Hide();
+			   }
+		   }
 
-			to_tidy_panel_void_ships_mark(MainFieldUser1, nullptr);
+		   void Randomize_User_Field_Ships(System::Object^ sender, System::EventArgs^ e) {
 
-			CreateFieldShips(first_ships_array, MainFieldUser1);
+			   first_ships_array->Clear();
+			   TemplateShipsField->Hide();
 
-			manage_visible_of_button(ready_button, first_ships_array);
-		}
+			   to_tidy_panel_void_ships_mark(MainFieldUser1, nullptr);
+
+			   CreateFieldShips(first_ships_array, MainFieldUser1);
+
+			   manage_visible_of_button(ready_button, first_ships_array);
+		   }
 #pragma endregion /*create random ships*/
 
-	#pragma region Fucntions for tidy(pieces of functiong "to_tidy_panel_void_ships_mark")
+#pragma region Fucntions for tidy(pieces of functiong "to_tidy_panel_void_ships_mark")
 
-		bool already_exist_required_point_tuple(List<Tuple<int, int>^>^ array_for_check, int x, int y) {
-			for each (Tuple<int, int>^ array_OneDim in array_for_check) {
-				if (array_OneDim->Item1 == x && array_OneDim->Item2 == y) {
-					return true;
-				}
+		   bool already_exist_required_point_tuple(List<Tuple<int, int>^>^ array_for_check, int x, int y) {
+			   for each (Tuple<int, int> ^ array_OneDim in array_for_check) {
+				   if (array_OneDim->Item1 == x && array_OneDim->Item2 == y) {
+					   return true;
+				   }
+			   }
+			   return false;
+		   }
+
+		   void to_clear_required_coords() {
+			   required_coordinates->Clear();
+		   }
+
+		   bool here_has_ships(int x, int y, Panel^ tidy_panel, List<Ship^>^ array_for_check, List<Tuple<int, int>^>^ required_coords_temp) {
+			   for each (Control ^ control in tidy_panel->Controls)
+			   {
+				   PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+
+				   if (pictureBox != nullptr) {
+					   Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
+					   for each (Ship ^ some_ship_from_array_for_check in array_for_check)
+					   {
+
+						   if (some_ship_from_array_for_check->is_that_your_coord(x, y)
+							   && !already_exist_required_point_tuple(required_coords_temp, tag->X, tag->Y)
+							   && ((tag->X != 0 || tag->Y != 0) || required_coords_temp->Count > 0)) {
+							   return true;// i add occupied coordinates.
+
+						   }
+					   }
+
+				   }
+			   }
+			   return false; //coordinates is free.
+			   //if coords are ready for use
+		   }
+
+		   void to_tidy_panel_void_ships_mark(Panel^ tidy_panel, List<Ship^>^ array_for_check) {
+			   if (!array_for_check) {
+				   for each (Control ^ control in tidy_panel->Controls)
+				   {
+					   PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+					   pictureBox->BackColor = System::Drawing::Color::LightBlue;
+				   }
+				   return;
+			   }
+			   else if (array_for_check->Count == 0) {
+				   for each (Control ^ control in tidy_panel->Controls) {
+					   PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+					   pictureBox->BackColor = System::Drawing::Color::LightBlue;
+				   }
+				   return;
+			   }
+
+			   //searching
+			   List<Tuple<int, int>^>^ required_coordinates_temp = gcnew List<Tuple<int, int>^>();
+			   for (int i = 0; i < rows; i++) {
+				   for (int j = 0; j < cols; j++) {
+					   if (here_has_ships(i, j, tidy_panel, array_for_check, required_coordinates_temp)) {
+						   required_coordinates_temp->Add(Tuple::Create(i, j));
+					   }
+				   }
+			   }
+
+			   for (int i = 0; i < required_coordinates_temp->Count; i++) {
+				   required_coordinates->Add(required_coordinates_temp[i]);
+			   }
+			   //painting
+			   for each (Control ^ control in tidy_panel->Controls) {
+				   PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
+
+				   if (pictureBox != nullptr) {
+					   Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
+					   bool ticket = true;
+					   for each (Tuple<int, int> ^ required_coords_tuple in required_coordinates) {
+						   if (tag->X == required_coords_tuple->Item1
+							   && tag->Y == required_coords_tuple->Item2) {
+							   ticket = false;
+							   break;
+						   }
+					   }
+					   if (ticket) {
+						   pictureBox->BackColor = System::Drawing::Color::LightBlue;
+					   }
+				   }
+			   }
+		   }
+#pragma endregion /*Fucntions for tidy(pieces of functiong "to_tidy_panel_void_ships_mark")*/
+
+#pragma region auxiliary functions
+
+		void WhoWin() {
+			if (users_ships_death == 10 || bot_ships_deth == 10) {
+				NextStage();
 			}
-			return false;
 		}
 
-		void to_clear_required_coords() {
-			required_coordinates->Clear();
-		}
-
-		bool here_has_ships(int x, int y, Panel^ tidy_panel, List<Ship^>^ array_for_check, List<Tuple<int, int>^>^ required_coords_temp) {
-			for each (Control ^ control in tidy_panel->Controls)
-			{
-				PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
-
-				if (pictureBox != nullptr) {
-					Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
-					for each (Ship ^ some_ship_from_array_for_check in array_for_check)
-					{
-
-						if (some_ship_from_array_for_check->is_that_your_coord(x, y) 
-							&& !already_exist_required_point_tuple(required_coords_temp, tag->X, tag->Y) 
-							&& ((tag->X != 0 || tag->Y != 0) || required_coords_temp->Count > 0)) {
-							return true;// i add occupied coordinates.
-
-						}
-					}
-
+		//+----------------------------------------------------------------------------------+
+		//|processing information how many ships alive in "condition_of_the_ships_array" list|
+		//|and writing that appropriate global variables									 |
+		//+----------------------------------------------------------------------------------+
+		void CheckingTheWellness(List<Ship^>^ condition_of_the_ships_array, Panel^ some_panel) {
+			int deth_ships{};
+			for each (Ship ^ some_ship in condition_of_the_ships_array) {
+				if (!some_ship->are_you_alive()) {
+					deth_ships++;
 				}
 			}
-			return false; //coordinates is free.
-			//if coords are ready for use
-		}
-
-		void to_tidy_panel_void_ships_mark(Panel^ tidy_panel, List<Ship^>^ array_for_check) {
-			if (!array_for_check) {
-				for each (Control ^ control in tidy_panel->Controls)
-				{
-					PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
-					pictureBox->BackColor = System::Drawing::Color::LightBlue;
-				}
-				return;
+			if (some_panel->Name == "MainFieldUser1") {
+				users_ships_death = deth_ships;
 			}
-			else if (array_for_check->Count == 0) {
-				for each (Control ^ control in tidy_panel->Controls) {
-					PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
-					pictureBox->BackColor = System::Drawing::Color::LightBlue;
-				}
-				return;
-			}
-
-			//searching
-			List<Tuple<int, int>^>^ required_coordinates_temp = gcnew List<Tuple<int, int>^>();
-			for (int i = 0; i < rows; i++) {
-				for (int j = 0; j < cols; j++) {
-					if (here_has_ships(i, j, tidy_panel, array_for_check, required_coordinates_temp)) {
-						required_coordinates_temp->Add(Tuple::Create(i, j));
-					}
-				}
-			}
-
-			for (int i = 0; i < required_coordinates_temp->Count; i++) {
-				required_coordinates->Add(required_coordinates_temp[i]);
-			}
-			//painting
-			for each (Control ^ control in tidy_panel->Controls) {
-				PictureBox^ pictureBox = dynamic_cast<PictureBox^>(control);
-
-				if (pictureBox != nullptr) {
-					Point^ tag = dynamic_cast<Point^>(pictureBox->Tag);
-					bool ticket = true;
-					for each (Tuple<int, int> ^ required_coords_tuple in required_coordinates) {
-						if (tag->X == required_coords_tuple->Item1
-							&& tag->Y == required_coords_tuple->Item2) {
-							ticket = false;
-							break;
-						}
-					}
-					if (ticket) {
-						pictureBox->BackColor = System::Drawing::Color::LightBlue;
-					}
-				}
+			else if (some_panel->Name == "Bot_Panel_Grid") {
+				bot_ships_deth = deth_ships;
 			}
 		}
-	#pragma endregion /*Fucntions for tidy(pieces of functiong "to_tidy_panel_void_ships_mark")*/
-
-	#pragma region auxiliary functions
-
 
 		bool already_exists_in_field(Ship^ some_ship, List<Ship^>^ array_of_ships) {
 			if (array_of_ships->Count <= 0) {
@@ -593,13 +650,7 @@ namespace SeaBattle {
 			return false;
 		}
 
-		//+--------------------------------------------------------------+
-		//|the name coincides with what the function does.				 |
-		//|It recieve the Ship^ and operating him parameters.		     |
-		//|And that function do important role.							 |
-		//|It create events for need cels and connects them to each other|
-		//+--------------------------------------------------------------+
-		void Mark_the_ship(Ship^ some_ship, System::Windows::Forms::Panel^ some_panel) {
+		List<PictureBox^>^ find_cells(Ship^ some_ship, System::Windows::Forms::Panel^ some_panel) {
 			//general moment where i use attribute from header of function for getting the coords.
 			List<List<int>^>^ coords = some_ship->your_coords();
 			List<PictureBox^>^ list_with_links_to_Cells = gcnew List<PictureBox^>();
@@ -611,7 +662,7 @@ namespace SeaBattle {
 
 				//cycle for find need cell by tag of declared the element. I have this element "some_panel"
 				for each (Control ^ control in some_panel->Controls) {
-					PictureBox^ cell = dynamic_cast<PictureBox^>(control); 
+					PictureBox^ cell = dynamic_cast<PictureBox^>(control);
 					Point^ cellTag = safe_cast<Point^>(cell->Tag);
 
 					if (cell != nullptr && cellTag->X == x && cellTag->Y == y) {
@@ -619,7 +670,20 @@ namespace SeaBattle {
 					}
 				}
 			}
+			return list_with_links_to_Cells;
+		}
 
+		
+		
+		//+--------------------------------------------------------------+
+		//|the name coincides with what the function does.				 |
+		//|It recieve the Ship^ and operating him parameters.		     |
+		//|And that function do important role.							 |
+		//|It create events for need cels and connects them to each other|
+		//+--------------------------------------------------------------+
+		void Mark_the_ship(Ship^ some_ship, System::Windows::Forms::Panel^ some_panel) {
+			
+			List<PictureBox^>^ list_with_links_to_Cells = find_cells(some_ship, some_panel);
 
 			//to what color i want to draw the cell
 			for each (PictureBox ^ cell in list_with_links_to_Cells) {
@@ -662,30 +726,14 @@ namespace SeaBattle {
 			}
 		}
 
+		
+		
 		//+-------------------------------------------+
 		//|i'd not want to make function much hardest.|
 		//|So I have just copy without condition	  |
 		//+-------------------------------------------+
 		void Marks_BackUp(Ship^ some_BackUp_Ship, System::Windows::Forms::Panel^ some_panel) {
-			//general moment where i use attribute from header of function for getting the coords.
-			List<List<int>^>^ coords = some_BackUp_Ship->your_coords();
-			List<PictureBox^>^ list_with_links_to_Cells = gcnew List<PictureBox^>();
-
-			for (int i = 0; i < coords->Count; i++) {
-				int x = coords[i]->default[0];
-				int y = coords[i]->default[1];
-
-
-				//cycle for find need cell by tag of declared the element. I have this element "some_panel"
-				for each (Control ^ control in some_panel->Controls) {
-					PictureBox^ cell = dynamic_cast<PictureBox^>(control);
-					Point^ cellTag = safe_cast<Point^>(cell->Tag);
-
-					if (cell != nullptr && cellTag->X == x && cellTag->Y == y) {
-						list_with_links_to_Cells->Add(cell);
-					}
-				}
-			}
+			List<PictureBox^>^ list_with_links_to_Cells = find_cells(some_BackUp_Ship, some_panel);
 
 			//to what color i want to draw the cell
 			for each (PictureBox ^ cell in list_with_links_to_Cells) {
@@ -708,27 +756,10 @@ namespace SeaBattle {
 			}
 		}
 
+		
+		
 		void Mark_Hits_by_Ships(Ship^ some_hitted_ship, System::Windows::Forms::Panel^ some_panel) {
-			//general moment where i use attribute from header of function for getting the coords.
-			List<List<int>^>^ coords = some_hitted_ship->your_hitted_coords();
-			List<PictureBox^>^ list_with_links_to_Cells = gcnew List<PictureBox^>();
-
-			for (int i = 0; i < coords->Count; i++) {
-				int x = coords[i]->default[0];
-				int y = coords[i]->default[1];
-
-
-				//cycle for find need cell by tag of declared the element. I have this element "some_panel"
-				for each (Control ^ control in some_panel->Controls) {
-					PictureBox^ cell = dynamic_cast<PictureBox^>(control);
-					Point^ cellTag = safe_cast<Point^>(cell->Tag);
-
-					if (cell != nullptr && cellTag->X == x && cellTag->Y == y) {
-						list_with_links_to_Cells->Add(cell);
-					}
-
-				}
-			}
+			List<PictureBox^>^ list_with_links_to_Cells = find_cells(some_hitted_ship, some_panel);
 
 			//to what color i want to draw the cell
 			for each (PictureBox ^ cell in list_with_links_to_Cells) {
@@ -751,6 +782,8 @@ namespace SeaBattle {
 			}
 		}
 
+		
+		
 		//+----------------------------------------------------+
 		//| its like search the ship by transmitted coordinates|
 		//+----------------------------------------------------+
@@ -768,9 +801,16 @@ namespace SeaBattle {
 			return nullptr;
 		}
 
-	#pragma endregion/*auxiliary functions*/
+	
+
+#pragma endregion/*auxiliary functions*/
 
 	#pragma region elements in window
+
+		void UpdateLabels() {
+			this->Main_User_Info_Label->Text = L"Alived: " + (first_ships_array->Count - users_ships_death).ToString();
+			this->Bot_Info_Label->Text = L"Alived: " + (second_ships_array->Count - bot_ships_deth).ToString();
+		}
 
 		//+------------------------------------------------------------+
 		//|it recieve the "list_of_ships_for_compare" and			   |
@@ -784,7 +824,6 @@ namespace SeaBattle {
 				some_button->Visible = true;
 			}
 		}
-
 
 	#pragma endregion/*elements in window*/
 
@@ -820,6 +859,8 @@ namespace SeaBattle {
 				"LMB by cell.", "Stage have been changed stage to Placement", MessageBoxButtons::OK, MessageBoxIcon::Information);
 		}
 
+		
+		
 		void StartBattle() {
 			{
 				TemplateShipsField->Hide();
@@ -838,7 +879,9 @@ namespace SeaBattle {
 			}
 
 			InitializeGameStage();
+
 			CreateFieldShips(second_ships_array, Bot_Panel_Grid);
+
 			to_tidy_panel_void_ships_mark(Bot_Panel_Grid, nullptr);
 
 			MessageBox::Show("You've passed stage Placement and finally! Switched to stage's Battle", "Stage have been changed stage to Battle", 
@@ -846,10 +889,11 @@ namespace SeaBattle {
 		}
 
 		void EndGame() {
-			// Код завершения игры
+			MainFieldUser1->Hide();
+			Bot_Panel_Grid->Hide();
+			MessageBox::Show((users_ships_death != 10 ? "User win!" : "", bot_ships_deth != 10 ? "You lose!" : "" "\nYou destroy: " + Convert::ToString(bot_ships_deth) + "\nYour ships destroyed: " + Convert::ToString(users_ships_death)), "Win");
 		}
 
-#pragma region events
 
 #pragma region general functions for reflection of ships
 
@@ -1174,9 +1218,62 @@ namespace SeaBattle {
 		}
 
 #pragma endregion /^bot functions*/
+
+#pragma region events
+
+	#pragma region Blinking cells
+
+		//void Change_Original_Color(Color some_color) {
+		//	originalColor = some_color;
+		//}
+
+		//void OnBlinkTimerTick(Object^ sender, EventArgs^ e) {
+		//	if (blinkingCell) {
+		//		blinkingCell->BackColor = toggle ? blinkColor1 : blinkColor2;
+		//		toggle = !toggle;
+		//	}
+		//}
+
+		//void StartBlinking(PictureBox^ cell, Color color1, Color color2) {
+		//	// Зберігаємо стан
+		//	blinkingCell = cell;
+		//	blinkColor1 = color1;
+		//	blinkColor2 = color2;
+		//	originalColor = cell->BackColor;
+		//	toggle = false;
+
+		//	// Ініціалізуємо таймер
+		//	blinkTimer = gcnew System::Windows::Forms::Timer();
+		//	blinkTimer->Interval = 300; // Інтервал у мілісекундах
+		//	blinkTimer->Tick += gcnew EventHandler(this, &Battlfield::OnBlinkTimerTick);
+		//	blinkTimer->Start();
+		//}
+
+		//void StopBlinking() {
+		//	if (blinkTimer) {
+		//		blinkTimer->Stop();
+		//		blinkTimer->Tick -= gcnew EventHandler(this, &Battlfield::OnBlinkTimerTick);
+		//		blinkTimer = nullptr;
+		//	}
+
+		//	// Повертаємо початковий колір клітинки
+		//	if (blinkingCell) {
+		//		blinkingCell->BackColor = originalColor;
+		//		blinkingCell = nullptr;
+		//	}
+		//}
+
+		//void StopBlinkingAfterDelay(System::Threading::Tasks::Task^ task) {
+		//	blinking = false;
+		//	StopBlinking();
+		//}
+
+
+	#pragma endregion /*Blinking cells*/
 		//+---------------------------------------+
 		//|draws x or y axis based on root [x:y]  |
 		//+---------------------------------------+
+		
 		void Battlfield::MouseWheel_Rotate_Ship(System::Object^ sender, System::Windows::Forms::MouseEventArgs^ e){
 			if (choosen_ship) {
 				backUpShip = choosen_ship;
@@ -1193,6 +1290,8 @@ namespace SeaBattle {
 			}
 		}
 
+		
+		
 		//+------------------------------------------------------------------------------------------+
 		//|cleaning the "panel" and paint choosen ship based on coords of cell which was hold a mouse|
 		//+------------------------------------------------------------------------------------------+
@@ -1207,6 +1306,9 @@ namespace SeaBattle {
 
 			}
 		}
+
+		
+		
 		void Battlfield::OnCellMouseClick(Object^ sender, MouseEventArgs^ e){
 
 			if (currentStage == GameStage::Setup) {
@@ -1338,10 +1440,21 @@ namespace SeaBattle {
 			}
 			else if (currentStage == GameStage::Battle) {
 				PictureBox^ clickedCell = safe_cast<PictureBox^>(sender);
+				Point^ clickedCellTag = safe_cast<Point^>(clickedCell->Tag);
 				Panel^ parentPanel = dynamic_cast<Panel^>(clickedCell->Parent);
 				if (parentPanel != MainFieldUser1) {
 					if (e->Button == System::Windows::Forms::MouseButtons::Left) {
-						ShootByThatCoordinates(sender, e); // Обробка лівого кліку
+						//if (blinking) {
+						//	StopBlinking();
+						//}
+						if (!you_already_shoot_here(clickedCellTag->X, clickedCellTag->Y, User_already_have_fired_there)) {
+							ShootByThatCoordinates(sender, e); // Обробка лівого кліку
+						}
+						//StartBlinking(clickedCell, blinkColor1, blinkColor2);
+						//System::Threading::Tasks::Task::Delay(1500)
+						//	->ContinueWith(gcnew System::Action<System::Threading::Tasks::Task^>(
+						//		this, &Battlfield::StopBlinkingAfterDelay));
+
 					}
 					else if (e->Button == System::Windows::Forms::MouseButtons::Right){
 						MarkCell(sender, e); // Обробка правого кліку
@@ -1353,31 +1466,67 @@ namespace SeaBattle {
 
 			}
 		}
-        // +----------------------------------------------------+
+        
+		// +----------------------------------------------------+
 		// | handler click by the cell.						    |
 		// | It has to working only in Battle mode and only when|
 		// | ClickedCell->BackColor != Color::DimGray		    |
 		// +----------------------------------------------------+
-        void ShootByThatCoordinates(System::Object^ sender, System::EventArgs^ e){
+        
+		void ShootByThatCoordinates(System::Object^ sender, System::EventArgs^ e){
             PictureBox^ clickedCell = safe_cast<PictureBox^>(sender);
 			
 			if (clickedCell->BackColor != System::Drawing::Color::DimGray) {
 				Ship^ some_ship;
-				//clickedCell->Size = System::Drawing::Size(28, 28);
+				List<int>^ buf = gcnew List<int>();
 				System::Drawing::Point^ clickedCellTag = safe_cast<System::Drawing::Point^>(clickedCell->Tag);
-				some_ship = initialize_ship_by_the_help_of_coords_by_cell(clickedCellTag->X, clickedCellTag->Y, first_ships_array);
+
+				some_ship = initialize_ship_by_the_help_of_coords_by_cell(clickedCellTag->X, clickedCellTag->Y, second_ships_array);
+
 				if (some_ship) {
 					clickedCell->BackColor = hit_colors[some_ship->get_Name()]; // change color of cell
+
+					some_ship->was_hitted(clickedCellTag->X, clickedCellTag->Y);
+
+					buf->Add(clickedCellTag->X);
+					buf->Add(clickedCellTag->Y);
+
+					User_already_have_fired_there->Add(buf);
+
+					CheckingTheWellness(second_ships_array, Bot_Panel_Grid);
+
+					UpdateLabels();
+					//Change_Original_Color(hit_colors[some_ship->get_Name()]);
 					return;
 				}
 				else {
 					clickedCell->Location = System::Drawing::Point(System::Convert::ToInt32(clickedCell->Location.X), System::Convert::ToInt32(clickedCell->Location.Y));
 					clickedCell->BackColor = System::Drawing::Color::LightGray; // change color of cell
+
+					CheckingTheWellness(second_ships_array, Bot_Panel_Grid);
+					UpdateLabels();
+
+					buf->Add(clickedCellTag->X);
+					buf->Add(clickedCellTag->Y);
+
+					User_already_have_fired_there->Add(buf);
+
 				}
+
 				Bot_to_fire();
+
+				CheckingTheWellness(first_ships_array, MainFieldUser1);
+				UpdateLabels();
+
+				WhoWin();
+
+				//Change_Original_Color(Color::LightGray);
+
+
+
 			}
         }
-
+		
 		void MarkCell(System::Object^ sender, System::EventArgs^ e) {
 			PictureBox^ clickedCell = safe_cast<PictureBox^>(sender);
 			clickedCell->Size = System::Drawing::Size(30, 30);
@@ -1400,6 +1549,8 @@ namespace SeaBattle {
 			}
 
 		}
+
+
 
 #pragma endregion
 
