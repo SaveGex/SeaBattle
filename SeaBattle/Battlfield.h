@@ -1,13 +1,18 @@
 ﻿#pragma once
 #include <array>
+#include <random>
 #include <ctime>
 #include <memory>
+#include <chrono>
 #include "Ship.h"
 #include "battleship.h"
 #include "Cruisers.h"
 #include "Destroyers.h"
 #include "Submarines.h"
-#include "CustomMessageBox.h"
+
+static std::mt19937 global_rng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+
 
 
 //+-----------------------------+
@@ -36,7 +41,6 @@ namespace SeaBattle {
 		};
 	public:
 		Battlfield(void){
-			srand(static_cast<unsigned int>(time(0)));
 			init_SizeOfShips();
 			init_countOfShips();
 			init_colors();
@@ -44,7 +48,8 @@ namespace SeaBattle {
 			init_hit_colors();
 
 			InitializeComponent();
-			
+
+			last_hit->X = -1; //in function Bot_to_fire() have condition which begining from check that variable
 			//
 			//TODO: Add the constructor code here
 			//
@@ -65,6 +70,7 @@ namespace SeaBattle {
 		//+----might be deleted after placement----+
 		List < List < int > ^ > ^ buffer_coords = gcnew List < List < int > ^ >(); 
 		List < List < int > ^ > ^ view_coordinates = gcnew List < List < int > ^ >();
+		List < List < int >^ >^ Bot_already_have_fired_there = gcnew List < List < int >^ >();
 		List < Tuple < int, int > ^ > ^ required_coordinates = gcnew List<Tuple < int, int >^ >();
 		List < Ship ^ > ^ second_ships_array = gcnew List < Ship ^ > ();
 		//+----------------------------------------+
@@ -112,15 +118,17 @@ namespace SeaBattle {
 		
 		//+-----------------------------------Field datas--------------------------------+
 		int simp_margin = 1;
-		const int sizeFieldY = 300 + (simp_margin * 10), sizeFieldX = 300 + (simp_margin * 10);
+		int sizeFieldY = 300 + (simp_margin * 10), sizeFieldX = 300 + (simp_margin * 10);
 		int corrections = simp_margin * 10;
 		//+------------------------------------------------------------------------------+
 
 		//+-----------temp data-----------+
+		Point^ last_hit = gcnew Point();
 		PictureBox^ buffer_Cell = nullptr; // ...
 		Ship^ choosen_ship = nullptr; // used for many functions like current choosen_ship.
 		Ship^ backUpShip = nullptr; // used for back up ship of drawing if itself coords isn't correct.
 		Ship^ backUpShip_Template = nullptr; //used for back up ship if i choose some ship and didn't set it
+		int count_seed = 1;
 		//+-------------------------------+
 
 		void init_SizeOfShips() {
@@ -212,9 +220,10 @@ namespace SeaBattle {
 			this->TemplateShipsField = (gcnew System::Windows::Forms::Panel());
 			this->ready_button = (gcnew System::Windows::Forms::Button());
 			this->randomize_button = (gcnew System::Windows::Forms::Button());
-
+			this->StartPosition = FormStartPosition::CenterScreen;
 			this->SuspendLayout();
-			// 
+			// Severity	Code	Description	Project	File	Line	Suppression State	Details
+
 			// MainFieldUser1
 			// 
 			this->MainFieldUser1->Location = System::Drawing::Point(12, 21);
@@ -367,16 +376,24 @@ namespace SeaBattle {
 		}
 
 		List<List<int>^>^ randomize_coordinates(int length, List<Ship^>^ list_of_pinned_ships) {
+			static std::mt19937 rng2(std::chrono::steady_clock::now().time_since_epoch().count());
+
+			
+
 			List<List<int>^>^ rand_coords = nullptr;
 			bool okPosition = false; /*while rand_coords don't to follow the ruls! kurwa*/
 
 
 			while (okPosition == false) {
-				bool XY = (rand() % (2) == 1) ? true : false;/*"true" define ONLY value X, false means ONLY the Y define what will be changed. Means on the axis X or Y*/
-				bool Y_Direction = (rand() % (2) == 1) ? true : false;/*"true" define direction will be changed only by the "top", false opposite that is to the "down"*/
-				bool X_Direction = (rand() % (2) == 1) ? true : false;/*"true" define direction will be changed only by the "rigth", false opposite that is to the "left"*/
-				int root_x = rand() % (10);/*randomly determines coordinates on the begin the function*/
-				int root_y = rand() % (10);/*randomly determines coordinates on the begin the function*/
+				std::uniform_int_distribution<int> dist(1, 2);
+				std::uniform_int_distribution<int> dist2(0, 9);
+
+
+				bool XY = (dist(rng2) == 1) ? true : false;/*"true" define ONLY value X, false means ONLY the Y define what will be changed. Means on the axis X or Y*/
+				bool Y_Direction = (dist(rng2) == 1) ? true : false;/*"true" define direction will be changed only by the "top", false opposite that is to the "down"*/
+				bool X_Direction = (dist(rng2) == 1) ? true : false;/*"true" define direction will be changed only by the "rigth", false opposite that is to the "left"*/
+				int root_x = dist2(rng2);/*randomly determines coordinates on the begin the function*/
+				int root_y = dist2(rng2);/*randomly determines coordinates on the begin the function*/
 
 				List<List<int>^>^ buffer = gcnew List<List<int>^>();
 				for (int i = 0; i < length; i++) {
@@ -413,6 +430,7 @@ namespace SeaBattle {
 		//|filling the "array_for_fill_a_ships" of random generats ships |
 		//+--------------------------------------------------------------+
 		void CreateFieldShips(List<Ship^>^% array_for_fill_a_ships, System::Windows::Forms::Panel^ panel_for_drawing_ships) {
+
 			for each (KeyValuePair<String^, int> kvp in countOfShips) {
 
 				String^ key = kvp.Key;
@@ -453,6 +471,7 @@ namespace SeaBattle {
 		}
 
 		void Randomize_User_Field_Ships(System::Object^ sender, System::EventArgs^ e) {
+
 			first_ships_array->Clear();
 			TemplateShipsField->Hide();
 
@@ -796,9 +815,9 @@ namespace SeaBattle {
 
 			manage_visible_of_button(ready_button, first_ships_array);
 
-			CustomMessageBox::Show("You are into stage Placement. Here you can press your LMB for choicing ship and move your mouse " +
+			MessageBox::Show("You are into stage Placement. Here you can press your LMB for choicing ship and move your mouse " +
 				"by left of the margin for changing place of a ship. \nWhen you will be ready for placement a ship in field press " +
-				"LMB by cell.", "Stage have been changed stage to Placement");
+				"LMB by cell.", "Stage have been changed stage to Placement", MessageBoxButtons::OK, MessageBoxIcon::Information);
 		}
 
 		void StartBattle() {
@@ -817,12 +836,13 @@ namespace SeaBattle {
 				view_coordinates ? view_coordinates->Clear() : view_coordinates;
 				buffer_coords ? buffer_coords->Clear() : buffer_coords;
 			}
-			
+
 			InitializeGameStage();
 			CreateFieldShips(second_ships_array, Bot_Panel_Grid);
 			to_tidy_panel_void_ships_mark(Bot_Panel_Grid, nullptr);
 
-			CustomMessageBox::Show("You've passed stage Placement and finally! Switched to stage's Battle", "Stage have been changed stage to Battle");
+			MessageBox::Show("You've passed stage Placement and finally! Switched to stage's Battle", "Stage have been changed stage to Battle", 
+				MessageBoxButtons::OK, MessageBoxIcon::Information);
 		}
 
 		void EndGame() {
@@ -950,8 +970,8 @@ namespace SeaBattle {
 		//|Coords changs when cursor to entered in some cell.					 |
 		//+----------------------------------------------------------------------+
 		void paint_choosen_ship(System::Object^ sender, System::EventArgs^ e) {
-			try { (!choosen_ship) ? System::Convert::ToString("choosen_ship in function \"paint_choosen_ship_while\" is equal to nullptr") : "nothing"; }
-			catch (String^ errmsg) { return; }
+			try { (!choosen_ship) ? throw : (void)0; }
+			catch (...) { return; }
 
 			List<List<int>^>^ view_coordinates_temp = gcnew List<List<int>^>;
 			PictureBox^ enterCell = dynamic_cast<PictureBox^>(sender);
@@ -1006,7 +1026,7 @@ namespace SeaBattle {
 			view_coordinates = view_coordinates_temp;
 		}
 
-		void generate_opposite_coords_wheel(int root_x, int root_y) {
+		void generate_opposite_coords_mouse_wheel(int root_x, int root_y) {
 			List<List<int>^>^ view_coordinates_temp = gcnew List<List<int>^>;
 
 			int x = (choosen_ship->get_Direction() == 'X') ? choosen_ship->get_Length() : 1;
@@ -1041,6 +1061,119 @@ namespace SeaBattle {
 
 #pragma endregion general functions for reflection of something
 
+#pragma region bot functions
+
+		void Mark_shoot(int x, int y, Panel^ some_panel) {
+			for each (Control ^ control in some_panel->Controls) {
+				PictureBox^ cell = dynamic_cast<PictureBox^>(control);
+
+				if (cell) {
+					Point^ cellTag = dynamic_cast<Point^>(cell->Tag);
+
+					if (cellTag->X == x && cellTag->Y == y) {
+						cell->BackColor = System::Drawing::Color::LightGray;
+					}
+				}
+				else {
+					MessageBox::Show("Cell in 'Mark_hit' is nullptr", "Error", MessageBoxButtons::OK, MessageBoxIcon::Information);
+					return;
+				}
+			}
+		}
+
+		void Mark_hit(int x, int y, Panel^ some_panel) {
+			for each (Control ^ control in some_panel->Controls) {
+				PictureBox^ cell = dynamic_cast<PictureBox^>(control);
+
+				if (cell) {
+					Point^ cellTag = dynamic_cast<Point^>(cell->Tag);
+
+					if (cellTag->X == x && cellTag->Y == y) {
+						Ship^ some_ship = initialize_ship_by_the_help_of_coords_by_cell(x, y, first_ships_array);
+						cell->BackColor = hit_colors[some_ship->get_Name()];
+					}
+				}
+				else {
+					MessageBox::Show("Cell in 'Mark_hit' is nullptr", "Error", MessageBoxButtons::OK, MessageBoxIcon::Information);
+					return;
+				}
+			}
+		}
+
+		bool To_Fire_Cell_and_Mark(int x, int y, List<Ship^>^% array_of_ships) {
+			for each (Ship ^ some_ship in array_of_ships) {
+				if (some_ship->is_that_your_coord(x, y)) {
+					Mark_hit(x, y, MainFieldUser1);
+					some_ship->was_hitted(x, y);
+					return true;
+				}else {
+					Mark_shoot(x, y, MainFieldUser1);
+				}
+			}
+
+			return false;
+		}
+
+		bool you_already_shoot_here(int x, int y, List<List<int>^>^ list_for_check) {
+			if (!list_for_check) {
+				return false;
+			}
+			else if (list_for_check->Count == 0) {
+				return false;
+			}
+			for each (List<int> ^ one_dim_arr in list_for_check) {
+				if (one_dim_arr[0] == x && one_dim_arr[1] == y) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		void Bot_to_fire() {
+			//							    yes -> 			 yes -> shoot again near you have been shot.
+			//								/				 /
+			//you have been hit somewhere? -  shoot -> hit?    -
+			//								\				 \
+			//								 no			  no  -> do nothing
+			bool have_been_hitted{ false };
+			do {
+				List<int>^ buf = gcnew List<int>();
+				int x{};
+				int y{};
+
+				if (last_hit->X != -1) {
+
+					while (last_hit->X == x && last_hit->Y == y && you_already_shoot_here(x, y, Bot_already_have_fired_there)) {
+						std::uniform_int_distribution<int> dist(last_hit->X-1, last_hit->X+1);
+						std::uniform_int_distribution<int> dist2(last_hit->Y - 1, last_hit->Y + 1);
+						x = dist(global_rng);
+						y = dist2(global_rng);
+					}
+				}
+				else {
+					while (you_already_shoot_here(x, y, Bot_already_have_fired_there)) {
+						std::uniform_int_distribution<int> dist(0, 9);
+						x = dist(global_rng);
+						y = dist(global_rng);
+					}
+				}
+				have_been_hitted = To_Fire_Cell_and_Mark(x, y, first_ships_array);
+				if (have_been_hitted) {
+					last_hit->X = x;
+					last_hit->Y = y;
+				}
+				else {
+					last_hit->X = -1;
+				}
+				buf->Add(x);
+				buf->Add(y);
+
+				Bot_already_have_fired_there->Add(buf);
+
+			} while (have_been_hitted);
+		}
+
+#pragma endregion /^bot functions*/
 		//+---------------------------------------+
 		//|draws x or y axis based on root [x:y]  |
 		//+---------------------------------------+
@@ -1050,7 +1183,7 @@ namespace SeaBattle {
 
 				choosen_ship->change_direction();
 
-				generate_opposite_coords_wheel(view_coordinates[0]->default[0], view_coordinates[0]->default[1]); // changed view_coords because it's a global variable
+				generate_opposite_coords_mouse_wheel(view_coordinates[0]->default[0], view_coordinates[0]->default[1]); // changed view_coords because it's a global variable
 
 				choosen_ship->change_coordinates(view_coordinates); // because in generate_opposite (and maybe others func) using that coords like main coords of ship
 
@@ -1213,6 +1346,7 @@ namespace SeaBattle {
 					else if (e->Button == System::Windows::Forms::MouseButtons::Right){
 						MarkCell(sender, e); // Обробка правого кліку
 					}
+					//LiveShips(MainFieldUser1, first_ships_array);
 				}
 			}
 			else if (currentStage == GameStage::GameOver) {
@@ -1234,14 +1368,16 @@ namespace SeaBattle {
 				some_ship = initialize_ship_by_the_help_of_coords_by_cell(clickedCellTag->X, clickedCellTag->Y, first_ships_array);
 				if (some_ship) {
 					clickedCell->BackColor = hit_colors[some_ship->get_Name()]; // change color of cell
+					return;
 				}
 				else {
 					clickedCell->Location = System::Drawing::Point(System::Convert::ToInt32(clickedCell->Location.X), System::Convert::ToInt32(clickedCell->Location.Y));
-					clickedCell->BackColor = System::Drawing::Color::DimGray; // change color of cell
+					clickedCell->BackColor = System::Drawing::Color::LightGray; // change color of cell
 				}
+				Bot_to_fire();
 			}
-            // you need to create additional logic, a handler that checks whether the ship is hit or not.
         }
+
 		void MarkCell(System::Object^ sender, System::EventArgs^ e) {
 			PictureBox^ clickedCell = safe_cast<PictureBox^>(sender);
 			clickedCell->Size = System::Drawing::Size(30, 30);
@@ -1254,13 +1390,13 @@ namespace SeaBattle {
 			if (clickedCell->BackColor == System::Drawing::Color::DimGray) {
 
 			}
-			else if (clickedCell->BackColor == System::Drawing::Color::DarkOrange) {
-				clickedCell->BackColor = System::Drawing::Color::LightBlue; // change color of cell
+			else if (clickedCell->BackColor == System::Drawing::Color::LightBlue) {
+				clickedCell->BackColor = System::Drawing::Color::LightYellow; // change color of cell
 				clickedCell->Size = System::Drawing::Size(30, 30);
 
 			}
-			else if (clickedCell->BackColor == System::Drawing::Color::LightBlue) {
-				clickedCell->BackColor = System::Drawing::Color::DarkOrange; // change color of cell
+			else if (clickedCell->BackColor == System::Drawing::Color::LightYellow) {
+				clickedCell->BackColor = System::Drawing::Color::LightBlue; // change color of cell
 			}
 
 		}

@@ -1,5 +1,6 @@
-#include "Battlfield.h"
 #include <sstream>
+#include "Battlfield.h"
+
 using namespace System;
 using namespace System::Windows::Forms;
 
